@@ -84,3 +84,16 @@ says what happened, the root cause, and the fix.
 - **Fix:** Clicking any placed ship now picks it up. Placing a different ship
   on an occupied cell can never succeed, so the old behaviour was never what
   the player wanted.
+
+## 7. Random placement could recurse until the stack overflowed
+
+- **What happened:** If `placeFleetRandomly()` got a fleet that can't fit,
+  such as a 5-long ship on a 3x3 board, it never returned and crashed with
+  "Maximum call stack size exceeded". This can't happen with the standard
+  10x10 board and fleet, but `Board` and `Game` accept a custom `size` and
+  `fleet`. (Reported by automated code review.)
+- **Root cause:** When no legal position was left for a ship, the function
+  called itself again with no limit on retries.
+- **Fix:** Retry in a loop, at most `maxAttempts` (100) times, then clear the
+  partial placement and throw `Fleet does not fit on this board`. Covered by
+  a new unit test.

@@ -90,6 +90,14 @@ describe('placement validation', () => {
   });
 });
 
+test('random placement of a fleet that cannot fit throws instead of recursing forever', () => {
+  const b = new Board(3);
+  assert.throws(() => b.placeFleetRandomly([spec('carrier')], createRng(1)), /does not fit/);
+  assert.equal(b.ships.length, 0);
+  const crowded = new Board(4);
+  assert.throws(() => crowded.placeFleetRandomly(FLEET.slice(1), createRng(1)), /does not fit/);
+});
+
 describe('hit / miss / sunk detection', () => {
   test('miss on empty water, hit on a ship', () => {
     const b = new Board();

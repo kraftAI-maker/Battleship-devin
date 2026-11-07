@@ -108,7 +108,15 @@ export class Board {
     return true;
   }
 
-  placeFleetRandomly(fleet, rng = Math.random) {
+  placeFleetRandomly(fleet, rng = Math.random, maxAttempts = 100) {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      if (this.tryPlaceFleetRandomly(fleet, rng)) return;
+    }
+    for (const spec of fleet) this.removeShip(spec.id);
+    throw new Error('Fleet does not fit on this board');
+  }
+
+  tryPlaceFleetRandomly(fleet, rng) {
     for (const spec of fleet) this.removeShip(spec.id);
     for (const spec of fleet) {
       const options = [];
@@ -119,13 +127,11 @@ export class Board {
           }
         }
       }
-      if (options.length === 0) {
-        // Extremely unlikely on a 10x10 board; restart from scratch.
-        return this.placeFleetRandomly(fleet, rng);
-      }
+      if (options.length === 0) return false;
       const [r, c, o] = options[randomInt(rng, options.length)];
       this.placeShip(spec, r, c, o);
     }
+    return true;
   }
 
   hasShot(row, col) {
