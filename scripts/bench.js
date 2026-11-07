@@ -24,6 +24,7 @@ results.sort((a, b) => a - b);
 const avg = results.reduce((n, s) => n + s, 0) / games;
 console.log(`games:   ${games}`);
 console.log(`average: ${avg.toFixed(1)} shots`);
-console.log(`median:  ${results[Math.floor(games / 2)]}`);
+const median = (results[Math.floor((games - 1) / 2)] + results[Math.floor(games / 2)]) / 2;
+console.log(`median:  ${median}`);
 console.log(`best:    ${results[0]}`);
 console.log(`worst:   ${results[games - 1]}`);
