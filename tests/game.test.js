@@ -134,6 +134,30 @@ describe('turns', () => {
   });
 });
 
+describe('aiThinking', () => {
+  test('null during placement and after game over, the AI pool during battle', () => {
+    const game = new Game({ rng: createRng(4) });
+    assert.equal(game.aiThinking(), null);
+    game.randomizePlayerShips();
+    game.startBattle();
+    assert.deepEqual(game.aiThinking(), game.ai.candidatePool());
+    assert.equal(game.aiThinking().mode, 'hunt');
+    let i = 0;
+    const targets = emptyEnemyCells(game);
+    while (game.phase !== PHASE_GAME_OVER) {
+      if (game.phase === PHASE_PLAYER_TURN) {
+        const t = targets[i++];
+        game.playerFire(t.row, t.col);
+      } else {
+        assert.deepEqual(game.aiThinking(), game.ai.candidatePool());
+        game.aiFire();
+        if (game.phase !== PHASE_GAME_OVER) assert.deepEqual(game.aiThinking(), game.ai.candidatePool());
+      }
+    }
+    assert.equal(game.aiThinking(), null);
+  });
+});
+
 describe('win condition', () => {
   test('player wins when every enemy ship cell is hit', () => {
     const game = readyGame(3);

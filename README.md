@@ -59,6 +59,24 @@ moves to the top.
   adjacent ship is still open, keep targeting it.
 - It never fires at the same cell twice.
 
+## AI thinking
+
+Tick **Show AI thinking** above *Your fleet* (off by default) to see what
+the computer is considering for its next shot. It picks that shot at random
+from the highlighted cells:
+
+- **Strong pink with an outline:** target candidates, the cells next to an
+  open hit or at the ends of a line of hits. The label says
+  "AI mode: Target".
+- **Faint pink:** hunt candidates, the untried checkerboard cells (or any
+  untried cell once those are used up). The label says "AI mode: Hunt".
+
+The overlay is shown during the battle and updates after every AI shot. It
+comes straight from the AI: `HuntTargetAI.candidatePool()` in `js/ai.js`
+returns the mode and cells that `nextShot()` picks from, and the UI reads it
+via `Game.aiThinking()`. Reading it has no side effects, so turning the
+overlay on doesn't change how the AI plays.
+
 ## Code structure
 
 ```

@@ -67,6 +67,81 @@ describe('AI never shoots the same cell twice', () => {
   });
 });
 
+describe('candidatePool (what the AI is considering)', () => {
+  const keys = (cells) => cells.map((c) => `${c.row},${c.col}`).sort();
+
+  test('hunt: all untried checkerboard cells', () => {
+    const ai = new HuntTargetAI({ rng: createRng(1) });
+    let pool = ai.candidatePool();
+    assert.equal(pool.mode, MODE_HUNT);
+    assert.equal(pool.cells.length, 50);
+    assert.ok(pool.cells.every((c) => (c.row + c.col) % 2 === 0));
+    ai.recordResult(0, 0, SHOT_MISS);
+    pool = ai.candidatePool();
+    assert.equal(pool.cells.length, 49);
+    assert.ok(!pool.cells.some((c) => c.row === 0 && c.col === 0));
+  });
+
+  test('target after one hit: the untried orthogonal neighbours', () => {
+    const ai = new HuntTargetAI({ rng: createRng(1) });
+    ai.recordResult(4, 5, SHOT_MISS);
+    ai.recordResult(4, 4, SHOT_HIT);
+    const pool = ai.candidatePool();
+    assert.equal(pool.mode, MODE_TARGET);
+    assert.deepEqual(keys(pool.cells), ['3,4', '4,3', '5,4']);
+  });
+
+  test('target with a line of hits: only the two open ends', () => {
+    const ai = new HuntTargetAI({ rng: createRng(1) });
+    ai.recordResult(4, 4, SHOT_HIT);
+    ai.recordResult(4, 5, SHOT_HIT);
+    assert.deepEqual(keys(ai.candidatePool().cells), ['4,3', '4,6']);
+    ai.recordResult(4, 6, SHOT_MISS);
+    assert.deepEqual(keys(ai.candidatePool().cells), ['4,3']);
+  });
+
+  test('back to the hunt pool after the ship sinks', () => {
+    const ai = new HuntTargetAI({ rng: createRng(1) });
+    ai.recordResult(2, 2, SHOT_HIT);
+    ai.recordResult(2, 3, SHOT_SUNK, [{ row: 2, col: 2 }, { row: 2, col: 3 }]);
+    const pool = ai.candidatePool();
+    assert.equal(pool.mode, MODE_HUNT);
+    assert.equal(pool.cells.length, 49);
+  });
+
+  test('every shot comes from the pool and mode matches, over 50 full games', () => {
+    for (let seed = 1; seed <= 50; seed++) {
+      const board = new Board();
+      board.placeFleetRandomly(FLEET, createRng(seed));
+      const ai = new HuntTargetAI({ rng: createRng(seed + 500) });
+      while (!board.allSunk()) {
+        const pool = ai.candidatePool();
+        assert.equal(pool.mode, ai.mode);
+        assert.equal(pool.mode === MODE_TARGET, ai.openHits.length > 0, 'target pool empty while hits are open');
+        const shot = ai.nextShot();
+        assert.ok(pool.cells.some((c) => c.row === shot.row && c.col === shot.col), `seed ${seed}: shot outside pool`);
+        const res = board.receiveAttack(shot.row, shot.col);
+        ai.recordResult(shot.row, shot.col, res.result, res.result === SHOT_SUNK ? res.ship.cells : []);
+      }
+    }
+  });
+
+  test('reading the pool does not change which shots the AI takes', () => {
+    const play = (peek) => {
+      const board = new Board();
+      board.placeFleetRandomly(FLEET, createRng(42));
+      const ai = new HuntTargetAI({ rng: createRng(43) });
+      const shots = [];
+      while (!board.allSunk()) {
+        if (peek) ai.candidatePool();
+        shots.push(step(ai, board));
+      }
+      return shots.map((s) => `${s.row},${s.col}`);
+    };
+    assert.deepEqual(play(true), play(false));
+  });
+});
+
 describe('hunt/target behaviour', () => {
   test('hunt mode only fires at checkerboard cells while any are untried', () => {
     const ai = new HuntTargetAI({ rng: createRng(5) });

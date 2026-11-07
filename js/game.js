@@ -168,6 +168,16 @@ export class Game {
     return { ok: true, ...res };
   }
 
+  /**
+   * What the AI is considering for its next shot, straight from
+   * HuntTargetAI.candidatePool(). Null outside the battle.
+   * @returns {{mode: 'hunt'|'target', cells: {row:number,col:number}[]}|null}
+   */
+  aiThinking() {
+    if (this.phase !== PHASE_PLAYER_TURN && this.phase !== PHASE_AI_TURN) return null;
+    return this.ai.candidatePool();
+  }
+
   recordShot(actor, res) {
     const stats = this.stats[actor];
     stats.shots += 1;

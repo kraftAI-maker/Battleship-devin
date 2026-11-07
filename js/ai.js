@@ -38,8 +38,9 @@ export class HuntTargetAI {
     this.openHits = [];
   }
 
+  /** The mode the next shot is chosen in (see candidatePool()). */
   get mode() {
-    return this.openHits.length > 0 ? MODE_TARGET : MODE_HUNT;
+    return this.candidatePool().mode;
   }
 
   key(row, col) {
@@ -62,13 +63,24 @@ export class HuntTargetAI {
     return this.inBounds(row, col) && !this.hasTried(row, col);
   }
 
+  /**
+   * The cells the next shot is picked from (uniformly at random) and the
+   * mode they come from. Read-only: calling it doesn't change the AI's state
+   * or consume randomness, so the UI can show it without affecting play.
+   * @returns {{mode: 'hunt'|'target', cells: {row:number,col:number}[]}}
+   */
+  candidatePool() {
+    const targets = this.targetCandidates();
+    if (targets.length > 0) return { mode: MODE_TARGET, cells: targets };
+    return { mode: MODE_HUNT, cells: this.huntCandidates() };
+  }
+
   nextShot() {
     if (this.tried.size >= this.size * this.size) {
       throw new Error('No cells left to shoot');
     }
-    const targets = this.targetCandidates();
-    const pool = targets.length > 0 ? targets : this.huntCandidates();
-    return pool[randomInt(this.rng, pool.length)];
+    const { cells } = this.candidatePool();
+    return cells[randomInt(this.rng, cells.length)];
   }
 
   /**
