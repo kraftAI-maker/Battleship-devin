@@ -1,5 +1,5 @@
 import {
-  Board, BOARD_SIZE, FLEET, HORIZONTAL, SHOT_HIT, SHOT_MISS, SHOT_SUNK, coordLabel, toggleOrientation,
+  Board, BOARD_SIZE, FLEET, HORIZONTAL, LEGACY_FLEET, SHOT_HIT, SHOT_MISS, SHOT_SUNK, coordLabel, toggleOrientation,
 } from './board.js';
 import { HuntTargetAI } from './ai.js';
 
@@ -18,9 +18,18 @@ export const AI = 'ai';
  *   placement --startBattle--> player-turn <--> ai-turn --> game-over
  */
 export class Game {
-  constructor({ size = BOARD_SIZE, fleet = FLEET, rng = Math.random } = {}) {
+  /**
+   * @param {object} [opts]
+   * @param {object[]} [opts.fleet] the player's ships
+   * @param {object[]} [opts.enemyFleet] the AI's ships; defaults to LEGACY_FLEET
+   *   for the standard fleet, otherwise to the same ships as `fleet`
+   */
+  constructor({
+    size = BOARD_SIZE, fleet = FLEET, enemyFleet = fleet === FLEET ? LEGACY_FLEET : fleet, rng = Math.random,
+  } = {}) {
     this.size = size;
     this.fleet = fleet;
+    this.enemyFleet = enemyFleet;
     this.rng = rng;
     this.gameId = 0;
     this.playerBoard = new Board(size);
@@ -33,7 +42,7 @@ export class Game {
     this.gameId += 1;
     this.playerBoard.reset();
     this.enemyBoard.reset();
-    this.enemyBoard.placeFleetRandomly(this.fleet, this.rng);
+    this.enemyBoard.placeFleetRandomly(this.enemyFleet, this.rng);
     this.ai.reset();
     this.phase = PHASE_PLACEMENT;
     this.winner = null;
@@ -195,15 +204,16 @@ export class Game {
       this.addLog(actor, `${who} fired at ${at}: miss.`, SHOT_MISS);
     } else if (res.result === SHOT_HIT) {
       this.addLog(actor, `${who} fired at ${at}: hit!`, SHOT_HIT);
+    } else if (actor === PLAYER) {
+      this.addLog(actor, `You fired at ${at}. You modernized the ${res.ship.name}!`, SHOT_SUNK);
     } else {
-      const whose = actor === PLAYER ? 'enemy' : 'your';
-      this.addLog(actor, `${who} fired at ${at}: sunk ${whose} ${res.ship.name}!`, SHOT_SUNK);
+      this.addLog(actor, `Enemy fired at ${at}: sunk your ${res.ship.name}!`, SHOT_SUNK);
     }
   }
 
   finish(winner) {
     this.phase = PHASE_GAME_OVER;
     this.winner = winner;
-    this.addLog('system', winner === PLAYER ? 'You win! The enemy fleet is destroyed.' : 'You lose. Your fleet has been sunk.');
+    this.addLog('system', winner === PLAYER ? 'You win! The legacy fleet is modernized.' : 'You lose. The legacy fleet sank your fleet.');
   }
 }

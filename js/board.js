@@ -13,6 +13,15 @@ export const FLEET = Object.freeze([
   Object.freeze({ id: 'destroyer', name: 'Destroyer', length: 2 }),
 ]);
 
+/** The enemy's fleet: same ids and lengths as FLEET, themed as legacy systems. */
+export const LEGACY_FLEET = Object.freeze([
+  Object.freeze({ id: 'carrier', name: 'COBOL Carrier', length: 5 }),
+  Object.freeze({ id: 'battleship', name: 'Mainframe Battleship', length: 4 }),
+  Object.freeze({ id: 'cruiser', name: 'Java 8 Cruiser', length: 3 }),
+  Object.freeze({ id: 'submarine', name: 'Monolith Submarine', length: 3 }),
+  Object.freeze({ id: 'destroyer', name: 'Tech-Debt Destroyer', length: 2 }),
+]);
+
 export const SHOT_MISS = 'miss';
 export const SHOT_HIT = 'hit';
 export const SHOT_SUNK = 'sunk';

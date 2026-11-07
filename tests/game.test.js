@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   Game, PHASE_PLACEMENT, PHASE_PLAYER_TURN, PHASE_AI_TURN, PHASE_GAME_OVER, PLAYER, AI,
 } from '../js/game.js';
-import { FLEET, HORIZONTAL, VERTICAL, SHOT_MISS } from '../js/board.js';
+import { FLEET, LEGACY_FLEET, HORIZONTAL, VERTICAL, SHOT_MISS, SHOT_SUNK } from '../js/board.js';
 import { createRng } from '../js/rng.js';
 
 function readyGame(seed = 1) {
@@ -323,5 +323,43 @@ describe('new game resets all state', () => {
     const first = layout();
     game.newGame();
     assert.notEqual(layout(), first);
+  });
+});
+
+describe('Legacy Fleet theme', () => {
+  test('the enemy fleet uses legacy names, the player keeps the classic names', () => {
+    const game = readyGame(4);
+    assert.deepEqual(game.enemyBoard.ships.map((s) => s.name).sort(), LEGACY_FLEET.map((s) => s.name).sort());
+    assert.deepEqual(game.playerBoard.ships.map((s) => s.name).sort(), FLEET.map((s) => s.name).sort());
+  });
+
+  test('sinking an enemy ship logs "You modernized the <name>!"', () => {
+    const game = readyGame(5);
+    const ship = game.enemyBoard.getShip('cruiser');
+    let res;
+    for (const { row, col } of ship.cells) {
+      res = game.playerFire(row, col);
+      if (game.phase === PHASE_AI_TURN) game.aiFire();
+    }
+    assert.equal(res.result, SHOT_SUNK);
+    assert.equal(game.lastShots.player.shipName, 'Java 8 Cruiser');
+    assert.ok(game.log.some((e) => e.actor === PLAYER && e.text.endsWith('You modernized the Java 8 Cruiser!')));
+  });
+
+  test('a player win is logged as the legacy fleet modernized', () => {
+    const game = readyGame(6);
+    for (const { row, col } of enemyShipCells(game)) {
+      game.playerFire(row, col);
+      if (game.phase === PHASE_AI_TURN) game.aiFire();
+    }
+    assert.equal(game.winner, PLAYER);
+    assert.equal(game.log.at(-1).text, 'You win! The legacy fleet is modernized.');
+  });
+
+  test('a custom fleet is used for both sides unless enemyFleet is given', () => {
+    const fleet = [{ id: 'a', name: 'A', length: 2 }];
+    assert.deepEqual(new Game({ fleet, rng: createRng(1) }).enemyBoard.ships.map((s) => s.name), ['A']);
+    const enemyFleet = [{ id: 'a', name: 'Legacy A', length: 2 }];
+    assert.deepEqual(new Game({ fleet, enemyFleet, rng: createRng(1) }).enemyBoard.ships.map((s) => s.name), ['Legacy A']);
   });
 });

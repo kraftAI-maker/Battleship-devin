@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Play Battleship in your browser against a hunt/target AI.">
-  <title>Battleship</title>
+  <meta name="description" content="Battleship: Legacy Fleet. Sink the legacy fleet before it sinks you, in your browser against a hunt/target AI.">
+  <title>Battleship: Legacy Fleet</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%231c4a70%22/%3E%3Ccircle cx=%228%22 cy=%228%22 r=%224%22 fill=%22%23ff8a3d%22/%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="phase-placement">
   <header class="topbar">
-    <h1>Battleship</h1>
+    <div class="title">
+      <h1>Battleship: Legacy Fleet</h1>
+      <p class="subtitle">Sink the legacy fleet before it sinks you</p>
+    </div>
     <button type="button" id="new-game" class="btn btn-secondary">New game</button>
   </header>
 
@@ -61,6 +64,10 @@
       <span class="legend-ai" hidden><i class="swatch ai-hunt"></i>AI hunt</span>
     </section>
   </main>
+
+  <footer class="site-footer">
+    Built by Aron Kraft with Devin · <a href="https://github.com/kraftAI-maker/Battleship-devin">Source &amp; build log</a>
+  </footer>
 
   <div id="overlay" class="overlay" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="result-title">
