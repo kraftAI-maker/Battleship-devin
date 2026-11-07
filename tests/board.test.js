@@ -112,6 +112,16 @@ test('random placement of a fleet that cannot fit throws instead of recursing fo
   assert.equal(crowded.ships.length, 0);
 });
 
+test('random placement finds a tiling for many same-length ships', () => {
+  // Twelve 3-long ships exactly tile a 6x6 board (two per row).
+  const fleet = Array.from({ length: 12 }, (_, i) => ({ id: `t${i}`, name: `T${i}`, length: 3 }));
+  for (let seed = 1; seed <= 30; seed++) {
+    const b = new Board(6);
+    b.placeFleetRandomly(fleet, createRng(seed));
+    assert.equal(b.ships.length, 12);
+  }
+});
+
 test('random placement of an untileable fleet gives up quickly instead of freezing', () => {
   // Nine 4-long ships fill a 6x6 board's area exactly but can't tile it.
   const b = new Board(6);

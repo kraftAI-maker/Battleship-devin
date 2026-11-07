@@ -116,7 +116,7 @@ export class Board {
     // capped so an untileable fleet fails fast instead of freezing the page.
     for (const spec of fleet) this.removeShip(spec.id);
     const budget = { left: searchBudget };
-    if (this.searchFleetPlacement(fleet, 0, rng, budget)) return;
+    if (this.searchFleetPlacement(fleet, rng, budget)) return;
     for (const spec of fleet) this.removeShip(spec.id);
     throw new Error(budget.left > 0
       ? 'Fleet does not fit on this board'
@@ -150,17 +150,43 @@ export class Board {
     return true;
   }
 
-  searchFleetPlacement(fleet, index, rng, budget) {
-    if (index === fleet.length) return true;
-    const occupied = this.ships.reduce((n, s) => n + s.length, 0);
-    const needed = fleet.slice(index).reduce((n, s) => n + s.length, 0);
-    if (occupied + needed > this.size * this.size) return false;
-    const spec = fleet[index];
-    for (const [r, c, o] of this.placementOptions(spec.length, rng)) {
+  // Fills cells in row-major order: the first undecided cell is either left empty (while the
+  // spare-cell count allows) or becomes the top/left end of an unplaced ship, since no ship can
+  // reach back over decided cells. Same-length ships are interchangeable, so each length is
+  // tried once per cell.
+  searchFleetPlacement(fleet, rng, budget, from = 0, remaining = [...fleet], spare = null) {
+    if (remaining.length === 0) return true;
+    if (spare === null) spare = this.size * this.size - fleet.reduce((n, s) => n + s.length, 0);
+    if (spare < 0) return false;
+    let index = from;
+    while (index < this.size * this.size && this.grid[Math.floor(index / this.size)][index % this.size]) index++;
+    if (index === this.size * this.size) return false;
+    const row = Math.floor(index / this.size);
+    const col = index % this.size;
+    const choices = [];
+    const seenLengths = new Set();
+    for (const spec of remaining) {
+      if (seenLengths.has(spec.length)) continue;
+      seenLengths.add(spec.length);
+      for (const orientation of [HORIZONTAL, VERTICAL]) {
+        if (this.canPlace(spec.length, row, col, orientation).ok) choices.push({ spec, orientation });
+      }
+    }
+    if (spare > 0) choices.push(null);
+    for (let i = choices.length - 1; i > 0; i--) {
+      const j = randomInt(rng, i + 1);
+      [choices[i], choices[j]] = [choices[j], choices[i]];
+    }
+    for (const choice of choices) {
       if (budget.left-- <= 0) return false;
-      this.placeShip(spec, r, c, o);
-      if (this.searchFleetPlacement(fleet, index + 1, rng, budget)) return true;
-      this.removeShip(spec.id);
+      if (choice === null) {
+        if (this.searchFleetPlacement(fleet, rng, budget, index + 1, remaining, spare - 1)) return true;
+        continue;
+      }
+      this.placeShip(choice.spec, row, col, choice.orientation);
+      const rest = remaining.filter((s) => s !== choice.spec);
+      if (this.searchFleetPlacement(fleet, rng, budget, index + 1, rest, spare)) return true;
+      this.removeShip(choice.spec.id);
     }
     return false;
   }

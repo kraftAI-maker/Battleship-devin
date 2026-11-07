@@ -109,6 +109,18 @@ says what happened, the root cause, and the fix.
   placements. That case now fails in about 1s with `Fleet does not fit on this
   board (search limit reached)`, and dense fleets that do fit still always
   place. Covered by a unit test.
+- **Follow-up 3:** A fourth review found that the limit could now reject fleets
+  that do fit, such as twelve 3-long ships on a 6x6 board. The real problem was
+  that the search was slow, so I changed how it searches rather than adjusting
+  the limit:
+  - It fills cells in row-major order. The first undecided cell is either left
+    empty, while spare cells remain, or becomes the top/left end of a ship.
+  - It tries each ship length only once per cell, since same-length ships are
+    interchangeable.
+
+  Results: 12x3 on 6x6 always places, and 9x4 on 6x6 is proven impossible in a
+  few milliseconds. Dense 5x5, 7x7 and 8x8 fleets place in about 1ms each. The
+  limit stays only as a safety net. Covered by unit tests.
 
 ## 8. Tab/Shift+Tab could leave the win/lose dialog
 
