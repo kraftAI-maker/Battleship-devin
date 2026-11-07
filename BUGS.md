@@ -97,6 +97,12 @@ says what happened, the root cause, and the fix.
 - **Fix:** Retry in a loop, at most `maxAttempts` (100) times, then clear the
   partial placement and throw `Fleet does not fit on this board`. Covered by
   a new unit test.
+- **Follow-up:** A second review found that the capped retries could reject
+  a dense fleet that does fit. For example, 25 cells of ships on a 5x5 board
+  failed on 23 of 50 seeds. Now, after 20 quick random attempts, it falls back
+  to an exhaustive search with shuffled options and backtracking. It throws
+  only when no placement exists. Covered by a unit test that fills a 5x5 board
+  for 30 seeds.
 
 ## 8. Tab/Shift+Tab could leave the win/lose dialog
 

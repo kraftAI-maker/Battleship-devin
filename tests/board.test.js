@@ -90,6 +90,17 @@ describe('placement validation', () => {
   });
 });
 
+test('random placement always succeeds for a dense fleet that exactly fills the board', () => {
+  // 25 cells on a 5x5 board: greedy random placement dead-ends on most seeds.
+  const dense = [...FLEET, { id: 'x', name: 'X', length: 4 }, { id: 'y', name: 'Y', length: 4 }];
+  for (let seed = 1; seed <= 30; seed++) {
+    const b = new Board(5);
+    b.placeFleetRandomly(dense, createRng(seed));
+    assert.equal(b.ships.length, dense.length);
+    assert.ok(b.grid.every((row) => row.every((cell) => cell !== null)));
+  }
+});
+
 test('random placement of a fleet that cannot fit throws instead of recursing forever', () => {
   const b = new Board(3);
   assert.throws(() => b.placeFleetRandomly([spec('carrier')], createRng(1)), /does not fit/);

@@ -108,30 +108,55 @@ export class Board {
     return true;
   }
 
-  placeFleetRandomly(fleet, rng = Math.random, maxAttempts = 100) {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+  placeFleetRandomly(fleet, rng = Math.random, quickAttempts = 20) {
+    for (let attempt = 0; attempt < quickAttempts; attempt++) {
       if (this.tryPlaceFleetRandomly(fleet, rng)) return;
     }
+    // Dense fleets can defeat random greedy placement; fall back to an exhaustive search.
     for (const spec of fleet) this.removeShip(spec.id);
+    if (this.searchFleetPlacement(fleet, 0, rng)) return;
     throw new Error('Fleet does not fit on this board');
+  }
+
+  placementOptions(length, rng) {
+    const options = [];
+    for (const orientation of [HORIZONTAL, VERTICAL]) {
+      for (let r = 0; r < this.size; r++) {
+        for (let c = 0; c < this.size; c++) {
+          if (this.canPlace(length, r, c, orientation).ok) options.push([r, c, orientation]);
+        }
+      }
+    }
+    for (let i = options.length - 1; i > 0; i--) {
+      const j = randomInt(rng, i + 1);
+      [options[i], options[j]] = [options[j], options[i]];
+    }
+    return options;
   }
 
   tryPlaceFleetRandomly(fleet, rng) {
     for (const spec of fleet) this.removeShip(spec.id);
     for (const spec of fleet) {
-      const options = [];
-      for (const orientation of [HORIZONTAL, VERTICAL]) {
-        for (let r = 0; r < this.size; r++) {
-          for (let c = 0; c < this.size; c++) {
-            if (this.canPlace(spec.length, r, c, orientation).ok) options.push([r, c, orientation]);
-          }
-        }
-      }
+      const options = this.placementOptions(spec.length, rng);
       if (options.length === 0) return false;
-      const [r, c, o] = options[randomInt(rng, options.length)];
+      const [r, c, o] = options[0];
       this.placeShip(spec, r, c, o);
     }
     return true;
+  }
+
+  searchFleetPlacement(fleet, index, rng) {
+    if (index === fleet.length) return true;
+    const occupied = this.ships.reduce((n, s) => n + s.length, 0);
+    const needed = fleet.slice(index).reduce((n, s) => n + s.length, 0);
+    if (occupied + needed > this.size * this.size) return false;
+    const spec = fleet[index];
+    for (const [r, c, o] of this.placementOptions(spec.length, rng)) {
+      this.placeShip(spec, r, c, o);
+      if (this.searchFleetPlacement(fleet, index + 1, rng)) return true;
+      this.removeShip(spec.id);
+    }
+    return false;
   }
 
   hasShot(row, col) {
