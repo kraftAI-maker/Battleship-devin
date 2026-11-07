@@ -46,7 +46,10 @@ moves to the top.
 
 ## Computer opponent (hunt/target)
 
-- **Hunt:** fire at a random cell it hasn't tried yet.
+- **Hunt:** fire at a random untried cell on the checkerboard pattern
+  (`(row + col) % 2 === 0`). The smallest ship is 2 long, so every ship
+  covers at least one of these cells. Once they are all used, any untried
+  cell.
 - **Target:** after a hit, fire at the cells directly next to it. Once two
   hits line up, keep going along that line in both directions until both
   ends hit a miss or the board edge.
@@ -66,6 +69,7 @@ js/ai.js          HuntTargetAI: shot selection + memory of its own shots
 js/game.js        Game: state machine (placement → player-turn ⇄ ai-turn → game-over)
 js/ui.js          DOM only: renders Game state, wires events, schedules the AI turn
 tests/*.test.js   Unit tests (node:test) for board, AI and game
+scripts/bench.js  AI benchmark: average shots over seeded games (npm run bench)
 BUGS.md           Bugs found during testing: symptom, root cause, fix
 ```
 
@@ -95,8 +99,20 @@ The tests cover:
   (parallel and end-to-end), and repeated or out-of-bounds shots
 - the win condition, for both the player and the AI
 - the AI never firing at the same cell twice (100 full games, plus all 100
-  cells of an empty board), and its hunt/target behaviour
+  cells of an empty board), and its hunt/target behaviour, including only
+  hunting on checkerboard cells
 - turn handling: no firing during placement or the AI's turn, and no double
   shots
 - a new game fully resetting all state: during placement, mid-battle,
   during the AI's turn, and after game over
+
+### AI benchmark
+
+```sh
+npm run bench          # 1,000 seeded games
+npm run bench -- 5000  # or any number of games
+```
+
+This reports the average, median, best and worst number of shots the AI
+needs to sink a randomly placed fleet. Currently the average is 51.5 and the
+worst is 68, over 1,000 games.

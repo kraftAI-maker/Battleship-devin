@@ -136,3 +136,21 @@ says what happened, the root cause, and the fix.
   Tab and Shift+Tab between the dialog's buttons. Escape still closes it. The
   same handler also returns early, so the `R` rotate shortcut can't fire
   behind the dialog.
+
+## 9. AI hunted less efficiently than it could (improvement from human review)
+
+- **What happened:** A simulation of 2,000 games showed the AI needed about
+  60 shots on average to sink the fleet, and up to 99 in the worst case.
+  `npm run bench` (1,000 seeded games) confirmed it: an average of 59.9, a
+  median of 59 and a worst case of 100. Found in human review.
+- **Root cause:** In hunt mode the AI fired at any untried cell. Every ship
+  is at least 2 long, so every ship covers a cell where `(row + col)` is
+  even. About half of all hunt shots went to cells that could never find a
+  ship the even cells wouldn't also find.
+- **Fix:** `HuntTargetAI.huntCandidates()` now picks only untried cells where
+  `(row + col) % 2 === 0`. If none are left, it falls back to any untried
+  cell. Target mode is unchanged. Benchmark after the fix: average 51.5,
+  median 53, worst 68. Covered by unit tests: hunt shots stay on the
+  checkerboard until all 50 even cells are tried, then fall back to the odd
+  ones, and target mode is not limited to the checkerboard. The average-shots
+  test threshold was tightened from 80 to 56.
