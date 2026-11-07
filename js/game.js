@@ -40,11 +40,12 @@ export class Game {
     this.orientation = HORIZONTAL;
     this.selectedShipId = this.fleet[0].id;
     this.log = [];
+    this.lastShots = { [PLAYER]: null, [AI]: null };
     this.stats = {
       [PLAYER]: { shots: 0, hits: 0 },
       [AI]: { shots: 0, hits: 0 },
     };
-    this.addLog('system', 'Place your fleet. Pick a ship, then click your board.');
+    this.addLog('system', 'Place your fleet. Pick a ship, then choose a cell on your board.');
   }
 
   addLog(actor, text, kind = 'info') {
@@ -179,6 +180,12 @@ export class Game {
   }
 
   recordShot(actor, res) {
+    this.lastShots[actor] = {
+      row: res.row,
+      col: res.col,
+      result: res.result,
+      shipName: res.result === SHOT_SUNK ? res.ship.name : null,
+    };
     const stats = this.stats[actor];
     stats.shots += 1;
     if (res.result !== SHOT_MISS) stats.hits += 1;

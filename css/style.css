@@ -85,6 +85,22 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
 .phase-player-turn .turn-indicator { background: #1b5e20; border-color: #43a047; }
 .phase-ai-turn .turn-indicator { background: #6d2b14; border-color: #ff8a3d; }
 .phase-game-over .turn-indicator { background: #4a148c; border-color: #9c27b0; }
+.ai-shot {
+  margin: 0.4rem auto 0;
+  padding: 0.3rem 0.8rem;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.ai-shot[hidden] { display: none; }
+.ai-shot.hit { border-color: var(--hit); color: #ffc49e; }
+.ai-shot.sunk { border-color: var(--sunk); background: #4a1414; color: #ffb3b3; }
+.ai-shot.fresh { animation: ai-shot-flash 0.6s ease-in-out 2; }
+@keyframes ai-shot-flash { 50% { box-shadow: 0 0 0 3px #ffd54f; } }
 .hint { min-height: 1.3em; margin: 0.4rem 0 0; color: var(--muted); font-size: 0.9rem; }
 .hint.error { color: #ff8a80; }
 
@@ -128,6 +144,10 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
   justify-content: center;
 }
 .board-wrap { flex: 1 1 340px; max-width: 440px; width: 100%; min-width: 0; }
+.board-wrap h2 { padding-left: 0.5rem; border-left: 4px solid; }
+#player-wrap h2 { border-color: var(--ship); }
+#enemy-wrap h2 { border-color: var(--hit); }
+.board-role { color: var(--muted); font-weight: normal; font-size: 0.9rem; }
 .ships-left { color: var(--muted); font-weight: normal; font-size: 0.85rem; }
 
 .board {
@@ -185,8 +205,17 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
     linear-gradient(-45deg, transparent 42%, #fff 42%, #fff 58%, transparent 58%);
 }
 .cell.sunk { background: var(--sunk); }
-.cell.revealed { box-shadow: inset 0 0 0 2px var(--ship); }
+/* Enemy ships still afloat at game over: hatched ship colour, light border. */
+.cell.revealed, .swatch.revealed {
+  background: repeating-linear-gradient(135deg, var(--ship) 0 3px, #5d6f80 3px 6px);
+  box-shadow: inset 0 0 0 2px var(--text);
+}
 .cell.last-shot { box-shadow: 0 0 0 2px #ffd54f; z-index: 1; }
+.cell.fresh-shot { animation: fresh-shot 0.6s ease-in-out 3; z-index: 2; }
+@keyframes fresh-shot { 50% { box-shadow: 0 0 0 5px #ffd54f, 0 0 14px 4px #ffd54f; } }
+@media (prefers-reduced-motion: reduce) {
+  .cell.fresh-shot, .ai-shot.fresh { animation: none; }
+}
 .cell.preview-valid { background: var(--valid); }
 .cell.preview-invalid { background: var(--invalid); }
 
@@ -275,10 +304,11 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
 .modal h2 { font-size: 1.6rem; }
 .modal-actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
 
-/* During battle on narrow screens show the board you shoot at first. */
+/* Narrow screens: the boards stack with the board you shoot at on top, in
+   every phase. It is empty during placement, so it is hidden then. */
 @media (max-width: 720px) {
-  .phase-player-turn #enemy-wrap,
-  .phase-ai-turn #enemy-wrap { order: -1; }
+  #enemy-wrap { order: -1; }
+  .phase-placement #enemy-wrap { display: none; }
   .topbar h1 { font-size: 1.2rem; }
   main { padding: 0.5rem; }
   .placement-actions .btn { flex: 1 1 45%; }

@@ -20,30 +20,36 @@ step, no backend, no dependencies.
 
 1. **Place your fleet** on *Your fleet*: Carrier (5), Battleship (4),
    Cruiser (3), Submarine (3), Destroyer (2).
-   - The selected ship is highlighted. Click a cell to place it, with the
-     clicked cell as its top/left end. Then the next ship is selected.
-   - **Rotate** (or press `R`) switches between horizontal and vertical. With
-     a mouse you see a preview: green fits, red doesn't.
+   - The selected ship is highlighted. Tap or click a cell to place it, with
+     that cell as its top/left end. Then the next ship is selected.
+   - **Rotate** switches between horizontal and vertical (with a keyboard you
+     can also press `R`; the hint only mentions it on devices that have a
+     mouse/trackpad or once a key has been pressed). With a mouse you see a
+     preview: green fits, red doesn't.
    - **Random placement** places the whole fleet for you. **Clear** removes
      all your ships.
-   - Click a placed ship (on the board or in the list) to pick it up and move
-     it.
+   - Tap or click a placed ship (on the board or in the list) to pick it up
+     and move it.
    - Ships may touch, but they can't overlap or go off the board.
 2. Press **Start battle**. The computer has already placed its fleet at
    random.
-3. **Fire** by clicking a cell in *Enemy waters*. Turns alternate: you, then
+3. **Fire** by tapping or clicking a cell in *Enemy waters*. Turns alternate: you, then
    the computer.
    - Markers: white dot = miss, orange ✕ = hit, red ✕ = sunk ship. Your
      ships are grey. The yellow outline marks the last shot on each board.
-   - The pill at the top shows whose turn it is. The battle log lists every
+   - The pill at the top shows whose turn it is. Below it, a status line
+     shows the enemy's last shot (e.g. "Enemy fired at C10 – hit!"), and
+     that cell on *Your fleet* flashes briefly. The battle log lists every
      shot (newest first).
 4. The first to sink the whole enemy fleet wins. The result dialog shows
-   shots and accuracy. Any ships the computer still has afloat are outlined.
-   Click **New game**, available at any time in the header.
+   shots and accuracy. Any ships the computer still has afloat are revealed
+   as hatched cells with a light border. **New game** is available at any
+   time in the header.
 
 Works with mouse, touch and keyboard (Tab to a cell, then Enter/Space). On
-narrow screens the boards stack, and during the battle the enemy board
-moves to the top.
+narrow screens the boards stack, always with *Enemy waters* (your shots)
+above *Your fleet* (the enemy's shots). *Enemy waters* is hidden during
+placement there, because it is still empty.
 
 ## Computer opponent (hunt/target)
 
