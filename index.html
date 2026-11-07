@@ -17,6 +17,7 @@
   <main>
     <section class="status-area">
       <p id="turn-indicator" class="turn-indicator" role="status" aria-live="polite">Place your fleet</p>
+      <p id="ai-shot" class="ai-shot" aria-live="polite" hidden></p>
       <p id="hint" class="hint" aria-live="polite"></p>
     </section>
 
@@ -32,7 +33,7 @@
 
     <section class="boards">
       <div class="board-wrap" id="player-wrap">
-        <h2>Your fleet <span class="ships-left" id="player-left"></span></h2>
+        <h2>Your fleet <span class="board-role">· enemy's shots</span> <span class="ships-left" id="player-left"></span></h2>
         <div class="ai-thinking-bar">
           <label class="toggle"><input type="checkbox" id="ai-thinking-toggle"> Show AI thinking</label>
           <span id="ai-mode" class="ai-mode" aria-live="polite" hidden></span>
@@ -40,7 +41,7 @@
         <div id="player-board" class="board" aria-label="Your board"></div>
       </div>
       <div class="board-wrap" id="enemy-wrap">
-        <h2>Enemy waters <span class="ships-left" id="enemy-left"></span></h2>
+        <h2>Enemy waters <span class="board-role">· your shots</span> <span class="ships-left" id="enemy-left"></span></h2>
         <div id="enemy-board" class="board" aria-label="Enemy board"></div>
       </div>
     </section>
@@ -55,6 +56,7 @@
       <span><i class="swatch miss"></i>Miss</span>
       <span><i class="swatch hit"></i>Hit</span>
       <span><i class="swatch sunk"></i>Sunk</span>
+      <span id="legend-revealed" hidden><i class="swatch revealed"></i>Enemy ship (not hit)</span>
       <span class="legend-ai" hidden><i class="swatch ai-target"></i>AI target</span>
       <span class="legend-ai" hidden><i class="swatch ai-hunt"></i>AI hunt</span>
     </section>

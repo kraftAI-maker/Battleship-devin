@@ -134,6 +134,48 @@ describe('turns', () => {
   });
 });
 
+describe('lastShots (shown in the "Enemy fired at ..." status line)', () => {
+  test('records each side\'s latest shot with its result', () => {
+    const game = readyGame(2);
+    assert.deepEqual(game.lastShots, { player: null, ai: null });
+    const res = game.playerFire(3, 4);
+    assert.deepEqual(game.lastShots.player, { row: 3, col: 4, result: res.result, shipName: null });
+    assert.equal(game.lastShots.ai, null);
+    const ai = game.aiFire();
+    assert.equal(game.lastShots.ai.row, ai.row);
+    assert.equal(game.lastShots.ai.col, ai.col);
+    assert.equal(game.lastShots.ai.result, ai.result);
+  });
+
+  test('a rejected shot does not change it', () => {
+    const game = readyGame(2);
+    game.playerFire(3, 4);
+    game.aiFire();
+    const before = structuredClone(game.lastShots);
+    game.playerFire(3, 4);
+    assert.deepEqual(game.lastShots, before);
+  });
+
+  test('names the ship when a shot sinks it', () => {
+    const game = new Game({ rng: createRng(3) });
+    game.placePlayerShip(0, 0, 'carrier', HORIZONTAL);
+    game.placePlayerShip(1, 0, 'battleship', HORIZONTAL);
+    game.placePlayerShip(2, 0, 'cruiser', HORIZONTAL);
+    game.placePlayerShip(3, 0, 'submarine', HORIZONTAL);
+    game.placePlayerShip(9, 8, 'destroyer', HORIZONTAL);
+    game.startBattle();
+    const targets = emptyEnemyCells(game);
+    let sunk = null;
+    for (let i = 0; !sunk && game.phase !== PHASE_GAME_OVER; i++) {
+      game.playerFire(targets[i].row, targets[i].col);
+      if (game.aiFire().result === 'sunk') sunk = game.lastShots.ai;
+    }
+    assert.ok(sunk, 'AI never sank a ship');
+    const ship = game.playerBoard.shipAt(sunk.row, sunk.col);
+    assert.equal(sunk.shipName, ship.name);
+  });
+});
+
 describe('aiThinking', () => {
   test('null during placement and after game over, the AI pool during battle', () => {
     const game = new Game({ rng: createRng(4) });
@@ -231,6 +273,7 @@ describe('new game resets all state', () => {
     assert.equal(game.ai.openHits.length, 0);
     assert.deepEqual(game.stats, { player: { shots: 0, hits: 0 }, ai: { shots: 0, hits: 0 } });
     assert.equal(game.log.length, 1);
+    assert.deepEqual(game.lastShots, { player: null, ai: null });
   }
 
   test('restarting mid-game', () => {

@@ -1,15 +1,18 @@
 import {
   Game, PHASE_PLACEMENT, PHASE_PLAYER_TURN, PHASE_AI_TURN, PHASE_GAME_OVER, PLAYER,
 } from './game.js';
-import { HORIZONTAL, SHOT_HIT, SHOT_MISS, coordLabel } from './board.js';
+import { HORIZONTAL, SHOT_HIT, SHOT_MISS, SHOT_SUNK, coordLabel } from './board.js';
 import { MODE_TARGET } from './ai.js';
 
 const AI_DELAY_MS = 700;
+const AI_SHOT_FLASH_MS = 1800;
 
 const $ = (id) => document.getElementById(id);
 const el = {
   body: document.body,
   turn: $('turn-indicator'),
+  aiShot: $('ai-shot'),
+  legendRevealed: $('legend-revealed'),
   hint: $('hint'),
   shipList: $('ship-list'),
   rotate: $('rotate'),
@@ -36,7 +39,13 @@ const el = {
 const game = new Game();
 let aiTimer = null;
 let preview = null; // { row, col } hovered cell on the player board during placement
-let lastShot = { player: null, ai: null };
+let aiShotFlash = false; // briefly highlight the AI's newest shot
+let aiFlashTimer = null;
+// Only mention the R shortcut where there is (likely) a keyboard: a mouse or
+// trackpad is present, or a key has been pressed.
+const finePointer = window.matchMedia('(any-pointer: fine)');
+let keyboardSeen = false;
+const hasKeyboard = () => keyboardSeen || finePointer.matches;
 let overlayDismissed = false;
 let showAiThinking = false;
 
@@ -115,7 +124,7 @@ function renderBoard(cells, board, { showShips, revealAll }) {
   const previewKeys = new Set(previewInfo ? previewInfo.cells.map((p) => `${p.row},${p.col}`) : []);
   const isEnemy = cells === enemyCells;
   const canFire = isEnemy && game.phase === PHASE_PLAYER_TURN;
-  const last = isEnemy ? lastShot.player : lastShot.ai;
+  const last = isEnemy ? game.lastShots.player : game.lastShots.ai;
   const thinking = !isEnemy && showAiThinking ? game.aiThinking() : null;
   const aiClass = thinking && (thinking.mode === MODE_TARGET ? 'ai-target' : 'ai-hunt');
   const aiKeys = new Set(thinking ? thinking.cells.map((p) => `${p.row},${p.col}`) : []);
@@ -131,7 +140,10 @@ function renderBoard(cells, board, { showShips, revealAll }) {
       if (ship && revealAll && !showShips && !sunkShip && !state) classes.push('revealed');
       if (state) classes.push(state);
       if (canFire && !state) classes.push('can-fire');
-      if (last && last.row === r && last.col === c) classes.push('last-shot');
+      if (last && last.row === r && last.col === c) {
+        classes.push('last-shot');
+        if (!isEnemy && aiShotFlash) classes.push('fresh-shot');
+      }
       if (previewKeys.has(`${r},${c}`)) classes.push(previewInfo.ok ? 'preview-valid' : 'preview-invalid');
       const aiConsidering = aiKeys.has(`${r},${c}`);
       if (aiConsidering) classes.push(aiClass);
@@ -192,6 +204,23 @@ function renderLog() {
   }
 }
 
+function aiShotText(shot) {
+  const at = coordLabel(shot.row, shot.col);
+  if (shot.result === SHOT_MISS) return `Enemy fired at ${at} – miss.`;
+  if (shot.result === SHOT_SUNK) return `Enemy fired at ${at} – sunk your ${shot.shipName}!`;
+  return `Enemy fired at ${at} – hit!`;
+}
+
+// Compact line near the top: on phones the boards stack and your own board
+// is below the fold, so this is where you see the enemy's last shot.
+function renderAiShot() {
+  const shot = game.lastShots.ai;
+  el.aiShot.hidden = !shot;
+  if (!shot) return;
+  el.aiShot.textContent = aiShotText(shot);
+  el.aiShot.className = `ai-shot ${shot.result}${aiShotFlash ? ' fresh' : ''}`;
+}
+
 function renderAiThinking() {
   const thinking = showAiThinking ? game.aiThinking() : null;
   el.aiMode.hidden = !showAiThinking;
@@ -240,6 +269,8 @@ function render() {
     showShips: false,
     revealAll: game.phase === PHASE_GAME_OVER,
   });
+  el.legendRevealed.hidden = !(game.phase === PHASE_GAME_OVER && game.enemyBoard.remainingShips().length > 0);
+  renderAiShot();
   renderAiThinking();
   renderLog();
   renderOverlay();
@@ -250,7 +281,7 @@ function render() {
 const PLACEMENT_ERRORS = {
   'out-of-bounds': "That ship doesn't fit there. Try another cell or rotate it.",
   overlap: 'That overlaps another ship.',
-  'no-ship-selected': 'All ships are placed. Click a ship to move it, or start the battle.',
+  'no-ship-selected': 'All ships are placed. Choose a ship to move it, or start the battle.',
 };
 
 function selectedShipName() {
@@ -260,9 +291,10 @@ function selectedShipName() {
 
 function placementHint() {
   if (game.allShipsPlaced()) {
-    setHint('Fleet ready. Press "Start battle" (click a ship to move it).');
+    setHint('Fleet ready: start the battle, or choose a placed ship to move it.');
   } else {
-    setHint(`Placing ${selectedShipName()}: click your board. Press R or "Rotate" to turn it.`);
+    const rotate = hasKeyboard() ? 'Use "Rotate" (or press R)' : 'Use "Rotate"';
+    setHint(`Placing ${selectedShipName()}: choose a cell on your board. ${rotate} to turn it.`);
   }
 }
 
@@ -274,7 +306,7 @@ function onPlayerBoardClick(event) {
   const shipHere = game.playerBoard.shipAt(pos.row, pos.col);
   if (shipHere) {
     game.pickUpShip(pos.row, pos.col);
-    setHint(`Picked up ${shipHere.name}. Click to place it again.`);
+    setHint(`Picked up ${shipHere.name}. Choose a cell to place it again.`);
     render();
     return;
   }
@@ -298,7 +330,6 @@ function onEnemyBoardClick(event) {
     else if (res.reason === 'not-your-turn') setHint('Wait for your turn.', true);
     return;
   }
-  lastShot.player = pos;
   setHint('');
   render();
   if (game.phase === PHASE_AI_TURN) scheduleAiTurn();
@@ -311,16 +342,29 @@ function scheduleAiTurn() {
     aiTimer = null;
     if (game.gameId !== gameId || game.phase !== PHASE_AI_TURN) return;
     const res = game.aiFire();
-    if (res.ok) lastShot.ai = { row: res.row, col: res.col };
+    if (res.ok) flashAiShot();
     render();
   }, AI_DELAY_MS);
+}
+
+function flashAiShot() {
+  // Restart the status line's flash animation if it is still running.
+  el.aiShot.classList.remove('fresh');
+  void el.aiShot.offsetWidth;
+  aiShotFlash = true;
+  clearTimeout(aiFlashTimer);
+  aiFlashTimer = setTimeout(() => {
+    aiShotFlash = false;
+    render();
+  }, AI_SHOT_FLASH_MS);
 }
 
 function newGame() {
   clearTimeout(aiTimer);
   aiTimer = null;
+  clearTimeout(aiFlashTimer);
+  aiShotFlash = false;
   preview = null;
-  lastShot = { player: null, ai: null };
   overlayDismissed = false;
   game.newGame();
   placementHint();
@@ -351,7 +395,7 @@ el.shipList.addEventListener('click', (event) => {
   const placed = game.playerBoard.getShip(id);
   if (placed) {
     game.pickUpShip(placed.row, placed.col);
-    setHint(`Picked up ${placed.name}. Click your board to place it again.`);
+    setHint(`Picked up ${placed.name}. Choose a cell on your board to place it again.`);
   } else {
     game.selectShip(id);
     placementHint();
@@ -364,7 +408,16 @@ el.rotate.addEventListener('click', () => {
   render();
 });
 
+function onKeyboardDetected() {
+  if (hasKeyboard()) el.hint.textContent = el.hint.textContent.replace('Use "Rotate" to', 'Use "Rotate" (or press R) to');
+}
+finePointer.addEventListener('change', onKeyboardDetected);
+
 document.addEventListener('keydown', (event) => {
+  if (!keyboardSeen) {
+    keyboardSeen = true;
+    onKeyboardDetected();
+  }
   if (!el.overlay.hidden) {
     if (event.key === 'Escape') {
       dismissOverlay();
@@ -408,7 +461,7 @@ el.start.addEventListener('click', () => {
     return;
   }
   preview = null;
-  setHint('Click a cell in "Enemy waters" to fire.');
+  setHint('Choose a cell in "Enemy waters" to fire.');
   render();
 });
 

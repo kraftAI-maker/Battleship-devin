@@ -154,3 +154,66 @@ says what happened, the root cause, and the fix.
   checkerboard until all 50 even cells are tried, then fall back to the odd
   ones, and target mode is not limited to the checkerboard. The average-shots
   test threshold was tightened from 80 to 56.
+
+## Found by human testing on real devices
+
+Found by a human tester on a real iPhone 16 Pro and iPad Air 13" (Safari).
+Fixes checked in headless Chrome at 390px with touch emulation (iPhone
+viewport, 390x844) and at 1280px with a mouse.
+
+### 10. On a phone you couldn't see where the AI hit you without scrolling
+
+- **What happened:** Below 720px the boards stack, with *Enemy waters* on top
+  during the battle. *Your fleet* is below the fold, so after each AI shot
+  you had to scroll down to see where it landed, then scroll back up to fire.
+- **Root cause:** The AI's shot was only shown on your own board (yellow
+  outline) and in the battle log, and both are further down the page on a
+  phone.
+- **Fix:** A compact status line under the turn indicator shows the AI's last
+  shot, e.g. "Enemy fired at C10 – hit!" or "… – sunk your Cruiser!". It is
+  colour-coded by result and flashes when it changes. The cell on *Your
+  fleet* pulses for about 2 seconds (no animation with
+  `prefers-reduced-motion`). The data comes from the new `Game.lastShots`,
+  which is reset on a new game and covered by unit tests. At 390px the line
+  ends 148px from the top, above *Enemy waters*, with no scrolling.
+
+### 11. Instructions said "click" and "Press R" on touch devices
+
+- **What happened:** On iPhone and iPad the hints said "click your board",
+  "Press R or Rotate" and "Click a cell in Enemy waters". There is no R key
+  on a touch screen.
+- **Root cause:** The hint texts and the first log entry were written for
+  desktop.
+- **Fix:** The wording is device-neutral now ("choose a cell"). The R shortcut
+  is only mentioned when `matchMedia('(any-pointer: fine)')` matches (a mouse
+  or trackpad, e.g. a desktop or an iPad with a trackpad keyboard), or after
+  the first key press. At 390px with touch emulation the hint reads
+  `Use "Rotate" to turn it.`. After a key press, or on desktop, it reads
+  `Use "Rotate" (or press R) to turn it.`.
+
+### 12. Remaining enemy ships were hard to see after the game
+
+- **What happened:** After a loss, the enemy ships you hadn't hit were drawn
+  only as a thin grey inset outline on dark water. That was easy to miss,
+  especially on a phone.
+- **Root cause:** `.cell.revealed` was a 2px `box-shadow` in the ship colour,
+  which has little contrast against the water colour.
+- **Fix:** Revealed cells now use a hatched ship-colour fill with a light
+  border. A legend entry, "Enemy ship (not hit)", appears at game over while
+  such ships remain.
+
+### 13. Board order changed between phases on a phone
+
+- **What happened:** Below 720px, *Your fleet* was on top during placement.
+  During the battle *Enemy waters* moved to the top. After game over *Your
+  fleet* was back on top. The tester lost track of which board was which.
+  The headings didn't say whose shots each board showed.
+- **Root cause:** The narrow-screen CSS moved *Enemy waters* up (`order: -1`)
+  only in the `phase-player-turn` and `phase-ai-turn` body classes.
+- **Fix:** On narrow screens *Enemy waters* is always above *Your fleet*.
+  During placement it is hidden there, because it is empty and would push
+  your board below the fold. It appears when the battle starts and never
+  swaps. The headings now read "Enemy waters · your shots" and "Your fleet ·
+  enemy's shots", with a coloured accent bar (orange vs grey). Checked at
+  390px: enemy board above in battle and at game over, before and after
+  closing the result dialog. On desktop the side-by-side layout is unchanged.
