@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  Board, FLEET, HORIZONTAL, VERTICAL, SHOT_HIT, SHOT_MISS, SHOT_SUNK, shipCells, coordLabel,
+  Board, FLEET, LEGACY_FLEET, HORIZONTAL, VERTICAL, SHOT_HIT, SHOT_MISS, SHOT_SUNK, shipCells, coordLabel,
 } from '../js/board.js';
 import { createRng } from '../js/rng.js';
 
@@ -221,4 +221,13 @@ describe('win condition', () => {
 test('coordLabel uses column letter + row number', () => {
   assert.equal(coordLabel(0, 0), 'A1');
   assert.equal(coordLabel(9, 9), 'J10');
+});
+
+describe('legacy fleet', () => {
+  test('same ids and lengths as the classic fleet, with legacy names', () => {
+    assert.deepEqual(LEGACY_FLEET.map((s) => [s.id, s.length]), FLEET.map((s) => [s.id, s.length]));
+    assert.deepEqual(LEGACY_FLEET.map((s) => s.name), [
+      'COBOL Carrier', 'Mainframe Battleship', 'Java 8 Cruiser', 'Monolith Submarine', 'Tech-Debt Destroyer',
+    ]);
+  });
 });

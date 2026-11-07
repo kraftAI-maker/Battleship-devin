@@ -1,8 +1,8 @@
 [![CI](https://github.com/kraftAI-maker/Battleship-devin/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kraftAI-maker/Battleship-devin/actions/workflows/ci.yml)
-# Battleship
+# Battleship: Legacy Fleet
 
-Classic Battleship in the browser against a computer opponent that uses a
-hunt/target strategy. Plain HTML, CSS and JavaScript (ES modules). No build
+*Sink the legacy fleet before it sinks you.* Classic Battleship in the
+browser against a computer opponent that uses a hunt/target strategy. Plain HTML, CSS and JavaScript (ES modules). No build
 step, no backend, no dependencies.
 
 ## Play
@@ -32,7 +32,7 @@ step, no backend, no dependencies.
      and move it.
    - Ships may touch, but they can't overlap or go off the board.
 2. Press **Start battle**. The computer has already placed its fleet at
-   random.
+   random: the *legacy fleet* (see below).
 3. **Fire** by tapping or clicking a cell in *Enemy waters*. Turns alternate: you, then
    the computer.
    - Markers: white dot = miss, orange ✕ = hit, red ✕ = sunk ship. Your
@@ -50,6 +50,16 @@ Works with mouse, touch and keyboard (Tab to a cell, then Enter/Space). On
 narrow screens the boards stack, always with *Enemy waters* (your shots)
 above *Your fleet* (the enemy's shots). *Enemy waters* is hidden during
 placement there, because it is still empty.
+
+## Legacy Fleet theme
+
+The enemy's ships are legacy systems with the same sizes as the classic
+fleet: COBOL Carrier (5), Mainframe Battleship (4), Java 8 Cruiser (3),
+Monolith Submarine (3), Tech-Debt Destroyer (2). Your own ships keep the
+classic names. Sinking an enemy ship logs "You modernized the COBOL
+Carrier!", and the win dialog says "Legacy fleet modernized in N shots". The
+names live in `LEGACY_FLEET` in `js/board.js`. `Game` uses it for the enemy
+by default (`new Game({ enemyFleet })` overrides it).
 
 ## Computer opponent (hunt/target)
 

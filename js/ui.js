@@ -251,8 +251,8 @@ function renderOverlay() {
   const accuracy = s.shots ? Math.round((s.hits / s.shots) * 100) : 0;
   el.resultTitle.textContent = won ? 'You win!' : 'You lose';
   el.resultText.textContent = won
-    ? `You sank the enemy fleet in ${s.shots} shots (${accuracy}% accuracy).`
-    : `The enemy sank your fleet in ${game.stats.ai.shots} shots. You hit ${s.hits} of ${s.shots} shots.`;
+    ? `Legacy fleet modernized in ${s.shots} shots (${accuracy}% accuracy).`
+    : `The legacy fleet sank yours in ${game.stats.ai.shots} shots. You hit ${s.hits} of ${s.shots} shots.`;
 }
 
 function render() {

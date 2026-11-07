@@ -217,3 +217,19 @@ viewport, 390x844) and at 1280px with a mouse.
   enemy's shots", with a coloured accent bar (orange vs grey). Checked at
   390px: enemy board above in battle and at game over, before and after
   closing the result dialog. On desktop the side-by-side layout is unchanged.
+
+## Found while building the Legacy Fleet theme
+
+### 14. Long title wrapped to four lines on a phone
+
+- **What happened:** With the new title "Battleship: Legacy Fleet" and its
+  subtitle, the header at 390px wrapped into two lines of title and two of
+  subtitle. That made the header 98px tall and pushed the board and the
+  enemy-shot status line down by about 30px.
+- **Root cause:** The header kept its desktop sizes (1.4rem/1.2rem title,
+  full-size "New game" button), which left only about 250px for the title.
+- **Fix:** Below 720px the title is 1.05rem with no letter spacing, the
+  subtitle is 0.75rem, the "New game" button is a little smaller, and both
+  lines use `text-wrap: balance`. At 390px the header is now one title line
+  and one subtitle line (64px). At 320px each wraps into two even lines
+  instead of leaving one word on its own line.
