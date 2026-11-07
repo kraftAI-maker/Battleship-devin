@@ -112,6 +112,16 @@ test('random placement of a fleet that cannot fit throws instead of recursing fo
   assert.equal(crowded.ships.length, 0);
 });
 
+test('random placement of an untileable fleet gives up quickly instead of freezing', () => {
+  // Nine 4-long ships fill a 6x6 board's area exactly but can't tile it.
+  const b = new Board(6);
+  const fleet = Array.from({ length: 9 }, (_, i) => ({ id: `s${i}`, name: `S${i}`, length: 4 }));
+  const start = Date.now();
+  assert.throws(() => b.placeFleetRandomly(fleet, createRng(1)), /does not fit/);
+  assert.ok(Date.now() - start < 5000);
+  assert.equal(b.ships.length, 0);
+});
+
 describe('hit / miss / sunk detection', () => {
   test('miss on empty water, hit on a ship', () => {
     const b = new Board();

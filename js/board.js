@@ -108,14 +108,19 @@ export class Board {
     return true;
   }
 
-  placeFleetRandomly(fleet, rng = Math.random, quickAttempts = 20) {
+  placeFleetRandomly(fleet, rng = Math.random, quickAttempts = 20, searchBudget = 200000) {
     for (let attempt = 0; attempt < quickAttempts; attempt++) {
       if (this.tryPlaceFleetRandomly(fleet, rng)) return;
     }
-    // Dense fleets can defeat random greedy placement; fall back to an exhaustive search.
+    // Dense fleets can defeat random greedy placement; fall back to a backtracking search,
+    // capped so an untileable fleet fails fast instead of freezing the page.
     for (const spec of fleet) this.removeShip(spec.id);
-    if (this.searchFleetPlacement(fleet, 0, rng)) return;
-    throw new Error('Fleet does not fit on this board');
+    const budget = { left: searchBudget };
+    if (this.searchFleetPlacement(fleet, 0, rng, budget)) return;
+    for (const spec of fleet) this.removeShip(spec.id);
+    throw new Error(budget.left > 0
+      ? 'Fleet does not fit on this board'
+      : 'Fleet does not fit on this board (search limit reached)');
   }
 
   placementOptions(length, rng) {
@@ -145,15 +150,16 @@ export class Board {
     return true;
   }
 
-  searchFleetPlacement(fleet, index, rng) {
+  searchFleetPlacement(fleet, index, rng, budget) {
     if (index === fleet.length) return true;
     const occupied = this.ships.reduce((n, s) => n + s.length, 0);
     const needed = fleet.slice(index).reduce((n, s) => n + s.length, 0);
     if (occupied + needed > this.size * this.size) return false;
     const spec = fleet[index];
     for (const [r, c, o] of this.placementOptions(spec.length, rng)) {
+      if (budget.left-- <= 0) return false;
       this.placeShip(spec, r, c, o);
-      if (this.searchFleetPlacement(fleet, index + 1, rng)) return true;
+      if (this.searchFleetPlacement(fleet, index + 1, rng, budget)) return true;
       this.removeShip(spec.id);
     }
     return false;

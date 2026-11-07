@@ -103,6 +103,12 @@ says what happened, the root cause, and the fix.
   to an exhaustive search with shuffled options and backtracking. It throws
   only when no placement exists. Covered by a unit test that fills a 5x5 board
   for 30 seeds.
+- **Follow-up 2:** A third review found that the exhaustive search could freeze
+  the page on fleets that fill the board's area but can't tile it, such as
+  nine 4-long ships on a 6x6 board. The search now has a budget of 200,000
+  placements. That case now fails in about 1s with `Fleet does not fit on this
+  board (search limit reached)`, and dense fleets that do fit still always
+  place. Covered by a unit test.
 
 ## 8. Tab/Shift+Tab could leave the win/lose dialog
 
