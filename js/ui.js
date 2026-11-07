@@ -323,7 +323,7 @@ function recordFinishedGame() {
   if (game.phase !== PHASE_GAME_OVER || recordedGameId === game.gameId) return;
   recordedGameId = game.gameId;
   // Start from what's stored, so a game another tab just saved isn't overwritten.
-  const base = statsSaved ? loadStats(storage()) : stats;
+  const base = statsSaved ? loadStats(storage(), stats) : stats;
   stats = addGame(base, { won: game.winner === PLAYER, shots: game.stats[PLAYER].shots });
   statsSaved = saveStats(storage(), stats);
 }
@@ -549,7 +549,7 @@ el.resetStats.addEventListener('click', () => {
 // Keep several open tabs in sync.
 window.addEventListener('storage', (event) => {
   if (event.key !== STATS_KEY && event.key !== null) return;
-  stats = loadStats(storage());
+  stats = loadStats(storage(), stats);
   renderStats();
 });
 

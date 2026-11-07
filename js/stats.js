@@ -19,15 +19,17 @@ export function validStats(data) {
 }
 
 /** Stats from storage; empty stats if there are none, they're corrupt, or storage throws. */
-export function loadStats(storage) {
+// Nothing stored means empty stats; unreadable or invalid data means `fallback`.
+export function loadStats(storage, fallback = emptyStats()) {
   try {
-    const raw = storage && storage.getItem(STATS_KEY);
-    if (!raw) return emptyStats();
+    if (!storage) return fallback;
+    const raw = storage.getItem(STATS_KEY);
+    if (raw === null) return emptyStats();
     const data = JSON.parse(raw);
-    if (!validStats(data)) return emptyStats();
+    if (!validStats(data)) return fallback;
     return { played: data.played, wins: data.wins, totalShots: data.totalShots, bestGame: data.bestGame };
   } catch {
-    return emptyStats();
+    return fallback;
   }
 }
 

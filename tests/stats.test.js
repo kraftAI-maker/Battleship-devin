@@ -85,6 +85,14 @@ describe('storage', () => {
     assert.equal(clearStats(undefined), false);
   });
 
+  test('a fallback is returned when the data cannot be read, but not when nothing is stored', () => {
+    const fallback = { played: 3, wins: 1, totalShots: 150, bestGame: 45 };
+    assert.deepEqual(loadStats(throwing, fallback), fallback);
+    assert.deepEqual(loadStats(null, fallback), fallback);
+    assert.deepEqual(loadStats(new MemoryStorage({ [STATS_KEY]: '{oops' }), fallback), fallback);
+    assert.deepEqual(loadStats(new MemoryStorage(), fallback), emptyStats());
+  });
+
   test('clearStats removes the stored record', () => {
     const storage = new MemoryStorage();
     saveStats(storage, { played: 1, wins: 0, totalShots: 70, bestGame: null });
