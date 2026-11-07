@@ -253,8 +253,30 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
 .cell.last-shot { box-shadow: 0 0 0 2px #ffd54f; z-index: 1; }
 .cell.fresh-shot { animation: fresh-shot 0.6s ease-in-out 3; z-index: 2; }
 @keyframes fresh-shot { 50% { box-shadow: 0 0 0 5px #ffd54f, 0 0 14px 4px #ffd54f; } }
+/* Short feedback on the newest shot: the hit marker pops in; a sunk ship
+   ripples cell by cell (--i = position in the ship). */
+.cell.anim-hit::after { animation: hit-pop 0.35s ease-out; }
+@keyframes hit-pop {
+  0% { transform: scale(0.2); opacity: 0; }
+  60% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.cell.anim-sunk { z-index: 1; }
+.cell.anim-sunk::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  animation: sink-ripple 0.6s ease-out calc(var(--i, 0) * 70ms) both;
+}
+@keyframes sink-ripple {
+  0% { opacity: 1; background: rgba(255, 255, 255, 0.6); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+  100% { opacity: 0; background: rgba(255, 255, 255, 0); box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .cell.fresh-shot, .ai-shot.fresh { animation: none; }
+  .cell.fresh-shot, .ai-shot.fresh, .cell.anim-hit::after, .cell.anim-sunk::before { animation: none; }
 }
 .cell.preview-valid { background: var(--valid); }
 .cell.preview-invalid { background: var(--invalid); }
@@ -307,6 +329,23 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
 .log li.ai { color: #ffccbc; }
 .log li.system { color: var(--muted); font-style: italic; }
 .log li.sunk { font-weight: 700; }
+
+/* stats */
+.stats-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.stats-head h2 { margin: 0; }
+.btn-small { min-height: 36px; padding: 0.3rem 0.7rem; font-size: 0.85rem; }
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+}
+.stats div { padding: 0.4rem 0.5rem; border-radius: var(--radius); background: rgba(255, 255, 255, 0.04); }
+.stats dt { color: var(--muted); font-size: 0.8rem; }
+.stats dd { margin: 0.1rem 0 0; font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stats dd .unit { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+.stats-note { margin: 0.5rem 0 0; color: var(--muted); font-size: 0.85rem; }
+.stats-note[hidden] { display: none; }
 
 /* legend */
 .legend { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; font-size: 0.85rem; color: var(--muted); }
