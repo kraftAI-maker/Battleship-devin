@@ -113,6 +113,20 @@ returns the mode and cells that `nextShot()` picks from (Hard adds `top`), and t
 via `Game.aiThinking()`. Reading it has no side effects, so turning the
 overlay on doesn't change how the AI plays.
 
+## Animations and stats
+
+- **Animations:** the marker of the newest hit pops in (0.35s). When a ship
+  is sunk, its cells ripple one after the other (about 0.9s in total). With
+  "Reduce motion" turned on in the OS (`prefers-reduced-motion: reduce`),
+  there are no animations.
+- **Your stats** (below the battle log): games played, wins, win rate,
+  average shots per game, and your best game (fewest shots in a win). A game
+  counts when it ends; games abandoned with "New game" don't count. Stats
+  are stored in this browser's `localStorage`, and every access is wrapped
+  in try/catch. If the browser blocks storage, the stats still work until
+  you close the page and a note says so. **Reset stats** clears them after
+  a confirmation.
+
 ## Code structure
 
 ```
@@ -122,13 +136,14 @@ js/rng.js         Seedable PRNG (mulberry32), used to make tests deterministic
 js/board.js       Board: ship placement/validation, attacks, sunk & win detection
 js/ai.js          AIs per difficulty (RandomAI, HuntTargetAI, DensityAI) + createAI()
 js/game.js        Game: state machine (placement → player-turn ⇄ ai-turn → game-over)
+js/stats.js       Local stats: add a finished game, summarize, load/save localStorage safely
 js/ui.js          DOM only: renders Game state, wires events, schedules the AI turn
-tests/*.test.js   Unit tests (node:test) for board, AI and game
+tests/*.test.js   Unit tests (node:test) for board, AI, game and stats
 scripts/bench.js  AI benchmark: average shots over seeded games (npm run bench)
 BUGS.md           Bugs found during testing: symptom, root cause, fix
 ```
 
-Game logic (`board.js`, `ai.js`, `game.js`) never touches the DOM, so Node
+Game logic (`board.js`, `ai.js`, `game.js`, `stats.js`) never touches the DOM, so Node
 can test it directly. `ui.js` is a thin layer: every user action calls a
 `Game` method, then re-renders from `Game`'s state. All the rules (whose turn
 it is, repeated shots, actions not allowed in the current phase) are checked
@@ -161,6 +176,9 @@ The tests cover:
   (centre first, misses and sunk ships rule placements out, open hits and
   lines of hits are targeted, seeded tie-breaks); Hard < Normal < Easy on
   average shots; difficulty only changes during placement
+- stats: counting games, wins, shots and the best win; win rate and
+  average rounding; save/load round trip; corrupt or tampered stored data,
+  and storage that is missing or throws, never raise an error
 - turn handling: no firing during placement or the AI's turn, and no double
   shots
 - a new game fully resetting all state: during placement, mid-battle,

@@ -3,6 +3,9 @@ import {
 } from './game.js';
 import { HORIZONTAL, SHOT_HIT, SHOT_MISS, SHOT_SUNK, coordLabel } from './board.js';
 import { DIFFICULTY_NAMES, MODE_TARGET } from './ai.js';
+import {
+  STATS_KEY, addGame, clearStats, emptyStats, loadStats, saveStats, summarize,
+} from './stats.js';
 
 const AI_DELAY_MS = 700;
 const AI_SHOT_FLASH_MS = 1800;
@@ -36,6 +39,13 @@ const el = {
   legendAiStrong: $('legend-ai-strong'),
   legendAiFaint: $('legend-ai-faint'),
   difficulty: $('difficulty'),
+  statPlayed: $('stat-played'),
+  statWins: $('stat-wins'),
+  statWinRate: $('stat-win-rate'),
+  statAverage: $('stat-average'),
+  statBest: $('stat-best'),
+  statsNote: $('stats-note'),
+  resetStats: $('reset-stats'),
 };
 
 const game = new Game();
@@ -50,6 +60,18 @@ let keyboardSeen = false;
 const hasKeyboard = () => keyboardSeen || finePointer.matches;
 let overlayDismissed = false;
 let showAiThinking = false;
+
+// Even reading window.localStorage can throw (e.g. storage blocked).
+function storage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+let stats = loadStats(storage());
+let statsSaved = true;
+let recordedGameId = null;
 
 // ---- board construction ------------------------------------------------
 
@@ -154,6 +176,7 @@ function renderBoard(cells, board, { showShips, revealAll }) {
   const isEnemy = cells === enemyCells;
   const canFire = isEnemy && game.phase === PHASE_PLAYER_TURN;
   const last = isEnemy ? game.lastShots.player : game.lastShots.ai;
+  const lastSunk = last && last.result === SHOT_SUNK ? board.shipAt(last.row, last.col) : null;
   const aiClasses = !isEnemy && showAiThinking ? thinkingClasses(game.aiThinking()) : new Map();
 
   for (let r = 0; r < game.size; r++) {
@@ -169,7 +192,13 @@ function renderBoard(cells, board, { showShips, revealAll }) {
       if (canFire && !state) classes.push('can-fire');
       if (last && last.row === r && last.col === c) {
         classes.push('last-shot');
+        if (last.result !== SHOT_MISS) classes.push('anim-hit');
         if (!isEnemy && aiShotFlash) classes.push('fresh-shot');
+      }
+      const sunkIndex = lastSunk ? lastSunk.cells.findIndex((p) => p.row === r && p.col === c) : -1;
+      if (sunkIndex >= 0) {
+        classes.push('anim-sunk');
+        cell.style.setProperty('--i', sunkIndex);
       }
       if (previewKeys.has(`${r},${c}`)) classes.push(previewInfo.ok ? 'preview-valid' : 'preview-invalid');
       const aiClass = aiClasses.get(`${r},${c}`);
@@ -289,7 +318,34 @@ function renderOverlay() {
     : `The legacy fleet sank yours in ${game.stats.ai.shots} shots (${level}). You hit ${s.hits} of ${s.shots} shots.`;
 }
 
+/** Count each finished game once, when it ends. */
+function recordFinishedGame() {
+  if (game.phase !== PHASE_GAME_OVER || recordedGameId === game.gameId) return;
+  recordedGameId = game.gameId;
+  stats = addGame(stats, { won: game.winner === PLAYER, shots: game.stats[PLAYER].shots });
+  statsSaved = saveStats(storage(), stats);
+}
+
+function renderStats() {
+  const s = summarize(stats);
+  el.statPlayed.textContent = String(s.played);
+  el.statWins.textContent = String(s.wins);
+  el.statWinRate.textContent = s.winRate === null ? '–' : `${s.winRate}%`;
+  el.statAverage.textContent = s.averageShots === null ? '–' : s.averageShots.toFixed(1);
+  if (s.bestGame === null) {
+    el.statBest.textContent = '–';
+  } else {
+    const unit = document.createElement('span');
+    unit.className = 'unit';
+    unit.textContent = ' shots';
+    el.statBest.replaceChildren(String(s.bestGame), unit);
+  }
+  el.statsNote.hidden = statsSaved;
+  el.resetStats.disabled = s.played === 0;
+}
+
 function render() {
+  recordFinishedGame();
   el.body.className = `phase-${game.phase}`;
   el.turn.textContent = turnText();
   el.orientationLabel.textContent = game.orientation === HORIZONTAL ? 'Horizontal' : 'Vertical';
@@ -308,6 +364,7 @@ function render() {
   renderAiShot();
   renderAiThinking();
   renderLog();
+  renderStats();
   renderOverlay();
 }
 
@@ -477,6 +534,20 @@ document.addEventListener('keydown', (event) => {
 el.aiThinkingToggle.addEventListener('change', () => {
   showAiThinking = el.aiThinkingToggle.checked;
   render();
+});
+
+el.resetStats.addEventListener('click', () => {
+  if (!window.confirm('Reset your stats? This cannot be undone.')) return;
+  stats = emptyStats();
+  statsSaved = clearStats(storage());
+  renderStats();
+});
+
+// Keep several open tabs in sync.
+window.addEventListener('storage', (event) => {
+  if (event.key !== STATS_KEY && event.key !== null) return;
+  stats = loadStats(storage());
+  renderStats();
 });
 
 el.difficulty.addEventListener('change', (event) => {

@@ -258,3 +258,15 @@ viewport, 390x844) and at 1280px with a mouse.
   lines use `text-wrap: balance`. At 390px the header is now one title line
   and one subtitle line (64px). At 320px each wraps into two even lines
   instead of leaving one word on its own line.
+
+## Found while building the polish (animations and stats)
+
+### 17. "Best game" wrapped onto two lines at 390px
+
+- **What happened:** In the new stats panel at 390px the boxes are three
+  per row, and the best game value "17 shots" broke into "17" and "shots"
+  on two lines, making that row taller than the others.
+- **Root cause:** The number and the word "shots" were both 1.25rem bold
+  text in a box only about 100px wide.
+- **Fix:** "shots" is now a smaller, muted unit and the value doesn't wrap.
+  Checked at 320px, 390px and 1280px: one line, no overflow.

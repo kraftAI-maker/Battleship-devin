@@ -60,6 +60,21 @@
       <ol id="log" class="log"></ol>
     </section>
 
+    <section class="panel stats-panel" aria-labelledby="stats-title">
+      <div class="stats-head">
+        <h2 id="stats-title">Your stats</h2>
+        <button type="button" id="reset-stats" class="btn btn-secondary btn-small">Reset stats</button>
+      </div>
+      <dl class="stats">
+        <div><dt>Games played</dt><dd id="stat-played">0</dd></div>
+        <div><dt>Wins</dt><dd id="stat-wins">0</dd></div>
+        <div><dt>Win rate</dt><dd id="stat-win-rate">–</dd></div>
+        <div><dt>Average shots</dt><dd id="stat-average">–</dd></div>
+        <div><dt>Best game</dt><dd id="stat-best">–</dd></div>
+      </dl>
+      <p id="stats-note" class="stats-note" hidden>This browser won't let the game save, so these stats are kept only until you close the page.</p>
+    </section>
+
     <section class="legend" aria-label="Legend">
       <span><i class="swatch ship"></i>Ship</span>
       <span><i class="swatch miss"></i>Miss</span>
