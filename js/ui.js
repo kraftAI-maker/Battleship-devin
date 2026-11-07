@@ -334,8 +334,17 @@ el.rotate.addEventListener('click', () => {
 });
 
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && !el.overlay.hidden) {
-    dismissOverlay();
+  if (!el.overlay.hidden) {
+    if (event.key === 'Escape') {
+      dismissOverlay();
+    } else if (event.key === 'Tab') {
+      // Keep focus inside the modal dialog.
+      const buttons = [...el.overlay.querySelectorAll('button')];
+      const i = buttons.indexOf(document.activeElement);
+      const next = event.shiftKey ? (i <= 0 ? buttons.length - 1 : i - 1) : (i + 1) % buttons.length;
+      event.preventDefault();
+      buttons[next].focus();
+    }
     return;
   }
   if ((event.key === 'r' || event.key === 'R') && game.phase === PHASE_PLACEMENT && !event.ctrlKey && !event.metaKey) {

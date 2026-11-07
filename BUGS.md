@@ -97,3 +97,18 @@ says what happened, the root cause, and the fix.
 - **Fix:** Retry in a loop, at most `maxAttempts` (100) times, then clear the
   partial placement and throw `Fleet does not fit on this board`. Covered by
   a new unit test.
+
+## 8. Tab/Shift+Tab could leave the win/lose dialog
+
+- **What happened:** With the result dialog open (focus on "New game"),
+  pressing Shift+Tab moved focus to the battle log behind the dialog, and
+  further Tabs reached the header and board controls while the dialog was
+  still open. Found in the recorded browser playtest, and also reported by
+  automated code review.
+- **Root cause:** `aria-modal="true"` only tells assistive tech the dialog is
+  modal. It doesn't stop focus from leaving. The fix for bug 4 set the
+  initial focus but didn't contain it.
+- **Fix:** While the overlay is visible, the document `keydown` handler cycles
+  Tab and Shift+Tab between the dialog's buttons. Escape still closes it. The
+  same handler also returns early, so the `R` rotate shortcut can't fire
+  behind the dialog.
