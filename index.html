@@ -33,6 +33,10 @@
     <section class="boards">
       <div class="board-wrap" id="player-wrap">
         <h2>Your fleet <span class="ships-left" id="player-left"></span></h2>
+        <div class="ai-thinking-bar">
+          <label class="toggle"><input type="checkbox" id="ai-thinking-toggle"> Show AI thinking</label>
+          <span id="ai-mode" class="ai-mode" aria-live="polite" hidden></span>
+        </div>
         <div id="player-board" class="board" aria-label="Your board"></div>
       </div>
       <div class="board-wrap" id="enemy-wrap">
@@ -51,6 +55,8 @@
       <span><i class="swatch miss"></i>Miss</span>
       <span><i class="swatch hit"></i>Hit</span>
       <span><i class="swatch sunk"></i>Sunk</span>
+      <span class="legend-ai" hidden><i class="swatch ai-target"></i>AI target</span>
+      <span class="legend-ai" hidden><i class="swatch ai-hunt"></i>AI hunt</span>
     </section>
   </main>
 

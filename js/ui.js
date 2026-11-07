@@ -2,6 +2,7 @@ import {
   Game, PHASE_PLACEMENT, PHASE_PLAYER_TURN, PHASE_AI_TURN, PHASE_GAME_OVER, PLAYER,
 } from './game.js';
 import { HORIZONTAL, SHOT_HIT, SHOT_MISS, coordLabel } from './board.js';
+import { MODE_TARGET } from './ai.js';
 
 const AI_DELAY_MS = 700;
 
@@ -27,6 +28,9 @@ const el = {
   resultText: $('result-text'),
   overlayNewGame: $('overlay-new-game'),
   overlayClose: $('overlay-close'),
+  aiThinkingToggle: $('ai-thinking-toggle'),
+  aiMode: $('ai-mode'),
+  legendAi: document.querySelectorAll('.legend-ai'),
 };
 
 const game = new Game();
@@ -34,6 +38,7 @@ let aiTimer = null;
 let preview = null; // { row, col } hovered cell on the player board during placement
 let lastShot = { player: null, ai: null };
 let overlayDismissed = false;
+let showAiThinking = false;
 
 // ---- board construction ------------------------------------------------
 
@@ -111,6 +116,9 @@ function renderBoard(cells, board, { showShips, revealAll }) {
   const isEnemy = cells === enemyCells;
   const canFire = isEnemy && game.phase === PHASE_PLAYER_TURN;
   const last = isEnemy ? lastShot.player : lastShot.ai;
+  const thinking = !isEnemy && showAiThinking ? game.aiThinking() : null;
+  const aiClass = thinking && (thinking.mode === MODE_TARGET ? 'ai-target' : 'ai-hunt');
+  const aiKeys = new Set(thinking ? thinking.cells.map((p) => `${p.row},${p.col}`) : []);
 
   for (let r = 0; r < game.size; r++) {
     for (let c = 0; c < game.size; c++) {
@@ -125,6 +133,8 @@ function renderBoard(cells, board, { showShips, revealAll }) {
       if (canFire && !state) classes.push('can-fire');
       if (last && last.row === r && last.col === c) classes.push('last-shot');
       if (previewKeys.has(`${r},${c}`)) classes.push(previewInfo.ok ? 'preview-valid' : 'preview-invalid');
+      const aiConsidering = aiKeys.has(`${r},${c}`);
+      if (aiConsidering) classes.push(aiClass);
       cell.className = classes.join(' ');
 
       if (isEnemy) {
@@ -139,6 +149,7 @@ function renderBoard(cells, board, { showShips, revealAll }) {
       if (state) label += `, ${state}`;
       else if (ship && showShips) label += `, your ${ship.name}`;
       else label += ', unknown';
+      if (aiConsidering) label += `, AI ${thinking.mode} candidate`;
       cell.setAttribute('aria-label', label);
     }
   }
@@ -181,6 +192,15 @@ function renderLog() {
   }
 }
 
+function renderAiThinking() {
+  const thinking = showAiThinking ? game.aiThinking() : null;
+  el.aiMode.hidden = !showAiThinking;
+  if (thinking) el.aiMode.textContent = `AI mode: ${thinking.mode === MODE_TARGET ? 'Target' : 'Hunt'}`;
+  else if (showAiThinking) el.aiMode.textContent = game.phase === PHASE_PLACEMENT ? 'Shown once the battle starts' : '';
+  el.aiMode.classList.toggle('target', Boolean(thinking && thinking.mode === MODE_TARGET));
+  for (const item of el.legendAi) item.hidden = !thinking;
+}
+
 function renderOverlay() {
   const show = game.phase === PHASE_GAME_OVER && !overlayDismissed;
   const wasHidden = el.overlay.hidden;
@@ -210,6 +230,7 @@ function render() {
     showShips: false,
     revealAll: game.phase === PHASE_GAME_OVER,
   });
+  renderAiThinking();
   renderLog();
   renderOverlay();
 }
@@ -351,6 +372,11 @@ document.addEventListener('keydown', (event) => {
     game.rotate();
     render();
   }
+});
+
+el.aiThinkingToggle.addEventListener('change', () => {
+  showAiThinking = el.aiThinkingToggle.checked;
+  render();
 });
 
 el.random.addEventListener('click', () => {
