@@ -33,3 +33,15 @@ says what happened, the root cause, and the fix.
   turn." Checked in the browser: after a shot, focus stays on the cell
   through the AI turn, and pressing Enter on another cell during the AI turn
   is rejected.
+
+## 3. Console error on every page load (favicon 404)
+
+- **What happened:** Every load logged `Failed to load resource: 404`
+  in the console. I spotted it while checking for errors during automated
+  playthroughs.
+- **Root cause:** No favicon was declared, so the browser asked for
+  `/favicon.ico`, which doesn't exist (and on GitHub Pages the request would
+  hit the site root, not the repo path).
+- **Fix:** Added an inline SVG data-URI favicon in `index.html`, so there's
+  no extra request and nothing to 404. Later playthroughs had zero console
+  errors.
