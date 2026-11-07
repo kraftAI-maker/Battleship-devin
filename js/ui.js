@@ -195,8 +195,18 @@ function renderLog() {
 function renderAiThinking() {
   const thinking = showAiThinking ? game.aiThinking() : null;
   el.aiMode.hidden = !showAiThinking;
-  if (thinking) el.aiMode.textContent = `AI mode: ${thinking.mode === MODE_TARGET ? 'Target' : 'Hunt'}`;
-  else if (showAiThinking) el.aiMode.textContent = game.phase === PHASE_PLACEMENT ? 'Shown once the battle starts' : '';
+  if (thinking) {
+    // Player cells are disabled during the battle, so keyboard and screen
+    // reader users get the candidate cells in the (live) label instead.
+    const detail = document.createElement('span');
+    detail.className = 'sr-only';
+    detail.textContent = thinking.mode === MODE_TARGET
+      ? `, next shot from ${thinking.cells.map((p) => coordLabel(p.row, p.col)).join(', ')}`
+      : `, next shot from ${thinking.cells.length} untried cells`;
+    el.aiMode.replaceChildren(`AI mode: ${thinking.mode === MODE_TARGET ? 'Target' : 'Hunt'}`, detail);
+  } else if (showAiThinking) {
+    el.aiMode.textContent = game.phase === PHASE_PLACEMENT ? 'Shown once the battle starts' : '';
+  }
   el.aiMode.classList.toggle('target', Boolean(thinking && thinking.mode === MODE_TARGET));
   for (const item of el.legendAi) item.hidden = !thinking;
 }

@@ -213,6 +213,14 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
 .ai-mode { font-weight: 600; color: var(--muted); }
 .ai-mode.target { color: var(--ai); }
 .ai-mode[hidden] { display: none; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 
 .phase-ai-turn #enemy-board { opacity: 0.75; }
 
