@@ -94,8 +94,11 @@ test('random placement of a fleet that cannot fit throws instead of recursing fo
   const b = new Board(3);
   assert.throws(() => b.placeFleetRandomly([spec('carrier')], createRng(1)), /does not fit/);
   assert.equal(b.ships.length, 0);
-  const crowded = new Board(4);
-  assert.throws(() => crowded.placeFleetRandomly(FLEET.slice(1), createRng(1)), /does not fit/);
+  // Each ship fits alone, but three 2-long ships (6 cells) can't share a 2x2 board.
+  const crowded = new Board(2);
+  const pairs = ['a', 'b', 'c'].map((id) => ({ id, name: id, length: 2 }));
+  assert.throws(() => crowded.placeFleetRandomly(pairs, createRng(1)), /does not fit/);
+  assert.equal(crowded.ships.length, 0);
 });
 
 describe('hit / miss / sunk detection', () => {
