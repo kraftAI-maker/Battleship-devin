@@ -238,10 +238,10 @@ function placementHint() {
 function onPlayerBoardClick(event) {
   const pos = cellFromEvent(event);
   if (!pos || game.phase !== PHASE_PLACEMENT) return;
-  // Clicking an existing ship when nothing is selected (or when it is the
-  // selected ship) picks it up so it can be moved.
+  // Clicking a placed ship picks it up so it can be moved. (Placing the
+  // selected ship on an occupied cell could never succeed anyway.)
   const shipHere = game.playerBoard.shipAt(pos.row, pos.col);
-  if (shipHere && (!game.selectedShipId || shipHere.id === game.selectedShipId)) {
+  if (shipHere) {
     game.pickUpShip(pos.row, pos.col);
     setHint(`Picked up ${shipHere.name}. Click to place it again.`);
     render();

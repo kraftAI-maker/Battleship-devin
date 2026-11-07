@@ -70,3 +70,17 @@ says what happened, the root cause, and the fix.
   `innerHTML = ''` on every render, which destroys the focused button.
 - **Fix:** Before rebuilding, remember which ship's button had focus, and
   focus the new button for that ship afterwards.
+
+## 6. Couldn't move an already-placed ship by clicking it on the board
+
+- **What happened:** After placing the Carrier, the Battleship was selected
+  automatically. Clicking the Carrier on the board to move it showed "That
+  overlaps another ship." instead of picking it up. Moving it only worked
+  from the fleet list or once every ship was placed, which contradicts the
+  README. (Reported by automated code review.)
+- **Root cause:** `onPlayerBoardClick()` only picked up a ship when nothing
+  was selected or when the clicked ship *was* the selected one. Otherwise it
+  tried to place the selected ship on the occupied cell.
+- **Fix:** Clicking any placed ship now picks it up. Placing a different ship
+  on an occupied cell can never succeed, so the old behaviour was never what
+  the player wanted.
