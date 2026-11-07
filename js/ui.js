@@ -541,7 +541,8 @@ el.aiThinkingToggle.addEventListener('change', () => {
 el.resetStats.addEventListener('click', () => {
   if (!window.confirm('Reset your stats? This cannot be undone.')) return;
   stats = emptyStats();
-  statsSaved = clearStats(storage());
+  // If removing fails, overwriting with empty stats still stops a reload from bringing them back.
+  statsSaved = clearStats(storage()) || saveStats(storage(), stats);
   renderStats();
 });
 
