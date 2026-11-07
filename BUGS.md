@@ -17,3 +17,19 @@ says what happened, the root cause, and the fix.
 - **Fix:** Use `repeat(11, minmax(0, 1fr))` for the board grid and add
   `min-width: 0` to `.board-wrap` and `main`. At 320px the board now ends at
   x=297 inside a 305px viewport.
+
+## 2. Keyboard focus lost after every shot
+
+- **What happened:** If you played with the keyboard (Tab to an enemy cell,
+  press Enter), focus jumped to `<body>` once the AI started its turn. You
+  had to Tab through the whole page again to take the next shot.
+- **Root cause:** To block clicks during the AI's turn, the UI set
+  `disabled` on every enemy cell button. Browsers drop focus from an element
+  when it becomes disabled.
+- **Fix:** Enemy cells now get `aria-disabled="true"` instead of `disabled`.
+  They stay focusable, assistive tech still announces them as unavailable,
+  and the turn rule is enforced where it belongs, in
+  `Game.playerFire()` (returns `not-your-turn`). The UI shows "Wait for your
+  turn." Checked in the browser: after a shot, focus stays on the cell
+  through the AI turn, and pressing Enter on another cell during the AI turn
+  is rejected.

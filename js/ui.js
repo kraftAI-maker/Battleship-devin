@@ -128,8 +128,9 @@ function renderBoard(cells, board, { showShips, revealAll }) {
       cell.className = classes.join(' ');
 
       if (isEnemy) {
-        // Already-shot cells stay clickable so the player gets feedback.
-        cell.disabled = game.phase !== PHASE_PLAYER_TURN;
+        // aria-disabled instead of disabled: a disabled button drops keyboard
+        // focus. Clicks out of turn are rejected by Game.playerFire anyway.
+        cell.setAttribute('aria-disabled', String(game.phase !== PHASE_PLAYER_TURN));
       } else {
         cell.disabled = game.phase !== PHASE_PLACEMENT;
       }
