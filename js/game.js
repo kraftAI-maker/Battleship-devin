@@ -1,7 +1,9 @@
 import {
   Board, BOARD_SIZE, FLEET, HORIZONTAL, LEGACY_FLEET, SHOT_HIT, SHOT_MISS, SHOT_SUNK, coordLabel, toggleOrientation,
 } from './board.js';
-import { HuntTargetAI } from './ai.js';
+import {
+  DIFFICULTIES, DIFFICULTY_NAMES, DIFFICULTY_NORMAL, createAI,
+} from './ai.js';
 
 export const PHASE_PLACEMENT = 'placement';
 export const PHASE_PLAYER_TURN = 'player-turn';
@@ -26,6 +28,7 @@ export class Game {
    */
   constructor({
     size = BOARD_SIZE, fleet = FLEET, enemyFleet = fleet === FLEET ? LEGACY_FLEET : fleet, rng = Math.random,
+    difficulty = DIFFICULTY_NORMAL,
   } = {}) {
     this.size = size;
     this.fleet = fleet;
@@ -34,8 +37,20 @@ export class Game {
     this.gameId = 0;
     this.playerBoard = new Board(size);
     this.enemyBoard = new Board(size);
-    this.ai = new HuntTargetAI({ size, rng });
+    this.setAI(difficulty);
     this.newGame();
+  }
+
+  setAI(difficulty) {
+    this.difficulty = difficulty;
+    this.ai = createAI(difficulty, { size: this.size, rng: this.rng, shipLengths: this.fleet.map((s) => s.length) });
+  }
+
+  /** Choose the AI's difficulty. Only before the battle; kept for new games. */
+  setDifficulty(difficulty) {
+    if (this.phase !== PHASE_PLACEMENT || !DIFFICULTIES.includes(difficulty)) return false;
+    if (difficulty !== this.difficulty) this.setAI(difficulty);
+    return true;
   }
 
   newGame() {
@@ -141,7 +156,7 @@ export class Game {
     if (!this.allShipsPlaced()) return { ok: false, reason: 'fleet-incomplete' };
     this.phase = PHASE_PLAYER_TURN;
     this.selectedShipId = null;
-    this.addLog('system', 'Battle started. Fire at the enemy waters!');
+    this.addLog('system', `Battle started on ${DIFFICULTY_NAMES[this.difficulty]}. Fire at the enemy waters!`);
     return { ok: true };
   }
 
@@ -180,8 +195,10 @@ export class Game {
 
   /**
    * What the AI is considering for its next shot, straight from
-   * HuntTargetAI.candidatePool(). Null outside the battle.
-   * @returns {{mode: 'hunt'|'target', cells: {row:number,col:number}[]}|null}
+   * the AI's candidatePool(). Null outside the battle. Hard also reports
+   * `top`, its highest-scoring cells.
+   * @returns {{mode: 'random'|'hunt'|'target', cells: {row:number,col:number}[],
+   *   top?: {row:number,col:number,score:number}[]}|null}
    */
   aiThinking() {
     if (this.phase !== PHASE_PLAYER_TURN && this.phase !== PHASE_AI_TURN) return null;
