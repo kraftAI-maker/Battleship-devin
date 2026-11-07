@@ -2,7 +2,7 @@ import {
   Game, PHASE_PLACEMENT, PHASE_PLAYER_TURN, PHASE_AI_TURN, PHASE_GAME_OVER, PLAYER,
 } from './game.js';
 import { HORIZONTAL, SHOT_HIT, SHOT_MISS, SHOT_SUNK, coordLabel } from './board.js';
-import { MODE_TARGET } from './ai.js';
+import { DIFFICULTY_NAMES, MODE_TARGET } from './ai.js';
 
 const AI_DELAY_MS = 700;
 const AI_SHOT_FLASH_MS = 1800;
@@ -33,7 +33,9 @@ const el = {
   overlayClose: $('overlay-close'),
   aiThinkingToggle: $('ai-thinking-toggle'),
   aiMode: $('ai-mode'),
-  legendAi: document.querySelectorAll('.legend-ai'),
+  legendAiStrong: $('legend-ai-strong'),
+  legendAiFaint: $('legend-ai-faint'),
+  difficulty: $('difficulty'),
 };
 
 const game = new Game();
@@ -117,6 +119,33 @@ function cellStateName(board, r, c) {
   return null;
 }
 
+/**
+ * Overlay classes for the AI's candidates, keyed "row,col". Normal: strong
+ * for target candidates, faint for hunt cells. Easy: faint for every cell it
+ * picks from. Hard: strong for its top-scoring cells (the pick is one of
+ * them), faint for the rest of its top cells.
+ */
+function thinkingClasses(thinking) {
+  const classes = new Map();
+  if (!thinking) return classes;
+  const key = (p) => `${p.row},${p.col}`;
+  if (thinking.top) {
+    for (const p of thinking.top) classes.set(key(p), 'ai-hunt');
+    for (const p of thinking.cells) classes.set(key(p), 'ai-target');
+  } else {
+    const cls = thinking.mode === MODE_TARGET ? 'ai-target' : 'ai-hunt';
+    for (const p of thinking.cells) classes.set(key(p), cls);
+  }
+  return classes;
+}
+
+const AI_MODE_NAMES = { hunt: 'Hunt', target: 'Target', random: 'Random' };
+const LEGEND_AI = {
+  easy: [null, 'AI random pick'],
+  normal: ['AI target', 'AI hunt'],
+  hard: ['AI top score', 'AI next best'],
+};
+
 function renderBoard(cells, board, { showShips, revealAll }) {
   const previewInfo = cells === playerCells && preview && game.phase === PHASE_PLACEMENT && game.selectedShipId
     ? game.previewPlacement(preview.row, preview.col)
@@ -125,9 +154,7 @@ function renderBoard(cells, board, { showShips, revealAll }) {
   const isEnemy = cells === enemyCells;
   const canFire = isEnemy && game.phase === PHASE_PLAYER_TURN;
   const last = isEnemy ? game.lastShots.player : game.lastShots.ai;
-  const thinking = !isEnemy && showAiThinking ? game.aiThinking() : null;
-  const aiClass = thinking && (thinking.mode === MODE_TARGET ? 'ai-target' : 'ai-hunt');
-  const aiKeys = new Set(thinking ? thinking.cells.map((p) => `${p.row},${p.col}`) : []);
+  const aiClasses = !isEnemy && showAiThinking ? thinkingClasses(game.aiThinking()) : new Map();
 
   for (let r = 0; r < game.size; r++) {
     for (let c = 0; c < game.size; c++) {
@@ -145,8 +172,8 @@ function renderBoard(cells, board, { showShips, revealAll }) {
         if (!isEnemy && aiShotFlash) classes.push('fresh-shot');
       }
       if (previewKeys.has(`${r},${c}`)) classes.push(previewInfo.ok ? 'preview-valid' : 'preview-invalid');
-      const aiConsidering = aiKeys.has(`${r},${c}`);
-      if (aiConsidering) classes.push(aiClass);
+      const aiClass = aiClasses.get(`${r},${c}`);
+      if (aiClass) classes.push(aiClass);
       cell.className = classes.join(' ');
 
       if (isEnemy) {
@@ -161,7 +188,7 @@ function renderBoard(cells, board, { showShips, revealAll }) {
       if (state) label += `, ${state}`;
       else if (ship && showShips) label += `, your ${ship.name}`;
       else label += ', unknown';
-      if (aiConsidering) label += `, AI ${thinking.mode} candidate`;
+      if (aiClass) label += aiClass === 'ai-target' ? ', AI strong candidate' : ', AI candidate';
       cell.setAttribute('aria-label', label);
     }
   }
@@ -229,15 +256,21 @@ function renderAiThinking() {
     // reader users get the candidate cells in the (live) label instead.
     const detail = document.createElement('span');
     detail.className = 'sr-only';
-    detail.textContent = thinking.mode === MODE_TARGET
+    const listed = thinking.cells.length <= 8;
+    detail.textContent = listed
       ? `, next shot from ${thinking.cells.map((p) => coordLabel(p.row, p.col)).join(', ')}`
       : `, next shot from ${thinking.cells.length} untried cells`;
-    el.aiMode.replaceChildren(`AI mode: ${thinking.mode === MODE_TARGET ? 'Target' : 'Hunt'}`, detail);
+    const label = `AI mode: ${AI_MODE_NAMES[thinking.mode]}${thinking.top ? ' (probability)' : ''}`;
+    el.aiMode.replaceChildren(label, detail);
   } else if (showAiThinking) {
     el.aiMode.textContent = game.phase === PHASE_PLACEMENT ? 'Shown once the battle starts' : '';
   }
-  el.aiMode.classList.toggle('target', Boolean(thinking && thinking.mode === MODE_TARGET));
-  for (const item of el.legendAi) item.hidden = !thinking;
+  el.aiMode.classList.toggle('target', Boolean(thinking && (thinking.mode === MODE_TARGET || thinking.top)));
+  const [strong, faint] = LEGEND_AI[game.difficulty];
+  el.legendAiStrong.hidden = !thinking || !strong;
+  el.legendAiFaint.hidden = !thinking;
+  el.legendAiStrong.lastChild.textContent = strong || '';
+  el.legendAiFaint.lastChild.textContent = faint;
 }
 
 function renderOverlay() {
@@ -249,10 +282,11 @@ function renderOverlay() {
   const won = game.winner === PLAYER;
   const s = game.stats[PLAYER];
   const accuracy = s.shots ? Math.round((s.hits / s.shots) * 100) : 0;
+  const level = DIFFICULTY_NAMES[game.difficulty];
   el.resultTitle.textContent = won ? 'You win!' : 'You lose';
   el.resultText.textContent = won
-    ? `Legacy fleet modernized in ${s.shots} shots (${accuracy}% accuracy).`
-    : `The legacy fleet sank yours in ${game.stats.ai.shots} shots. You hit ${s.hits} of ${s.shots} shots.`;
+    ? `Legacy fleet modernized in ${s.shots} shots (${level}, ${accuracy}% accuracy).`
+    : `The legacy fleet sank yours in ${game.stats.ai.shots} shots (${level}). You hit ${s.hits} of ${s.shots} shots.`;
 }
 
 function render() {
@@ -270,6 +304,7 @@ function render() {
     revealAll: game.phase === PHASE_GAME_OVER,
   });
   el.legendRevealed.hidden = !(game.phase === PHASE_GAME_OVER && game.enemyBoard.remainingShips().length > 0);
+  for (const input of el.difficulty.elements) input.checked = input.value === game.difficulty;
   renderAiShot();
   renderAiThinking();
   renderLog();
@@ -343,6 +378,8 @@ function scheduleAiTurn() {
     if (game.gameId !== gameId || game.phase !== PHASE_AI_TURN) return;
     const res = game.aiFire();
     if (res.ok) flashAiShot();
+    // A "Wait for your turn." from tapping during the AI's turn is stale now.
+    if (el.hint.classList.contains('error')) setHint('');
     render();
   }, AI_DELAY_MS);
 }
@@ -439,6 +476,11 @@ document.addEventListener('keydown', (event) => {
 
 el.aiThinkingToggle.addEventListener('change', () => {
   showAiThinking = el.aiThinkingToggle.checked;
+  render();
+});
+
+el.difficulty.addEventListener('change', (event) => {
+  game.setDifficulty(event.target.value);
   render();
 });
 

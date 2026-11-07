@@ -75,11 +75,9 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
   min-height: 44px;
   touch-action: manipulation;
 }
-.btn:hover:not(:disabled) { background: #26507a; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .cell[aria-disabled="true"] { cursor: not-allowed; }
 .btn-primary { background: var(--primary); border-color: var(--primary); }
-.btn-primary:hover:not(:disabled) { background: #3a8ef0; }
 .btn-secondary { background: transparent; }
 .btn:focus-visible, .cell:focus-visible { outline: 3px solid #ffd54f; outline-offset: 1px; }
 
@@ -145,6 +143,31 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
 .ship-pips i { width: 10px; height: 10px; background: var(--ship); border-radius: 2px; }
 
 .placement-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.difficulty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: 0;
+}
+.difficulty legend { float: left; margin-right: 0.4rem; padding: 0; color: var(--muted); }
+.difficulty label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0 0.8rem;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  background: #1d3c5a;
+  cursor: pointer;
+}
+.difficulty input { margin: 0; accent-color: #ffd54f; cursor: pointer; }
+.difficulty label:has(input:checked) { border-color: #ffd54f; box-shadow: 0 0 0 2px #ffd54f inset; }
+.difficulty label:has(input:focus-visible) { outline: 2px solid #ffd54f; outline-offset: 2px; }
 .phase-placement .placement-panel { display: block; }
 .placement-panel { display: none; }
 
@@ -198,7 +221,12 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
 }
 
 #enemy-board .cell.can-fire { cursor: crosshair; }
-#enemy-board .cell.can-fire:hover { background: var(--water-hover); }
+/* Only where hovering exists: iOS keeps :hover on the last tapped element. */
+@media (hover: hover) {
+  .btn:hover:not(:disabled) { background: #26507a; }
+  .btn-primary:hover:not(:disabled) { background: #3a8ef0; }
+  #enemy-board .cell.can-fire:hover { background: var(--water-hover); }
+}
 .phase-placement #player-board .cell { cursor: pointer; }
 
 .cell.ship { background: var(--ship); }
@@ -328,4 +356,6 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
   .topbar .btn { padding: 0.4rem 0.7rem; font-size: 0.9rem; }
   main { padding: 0.5rem; }
   .placement-actions .btn { flex: 1 1 45%; }
+  .difficulty legend { width: 100%; margin: 0 0 0.3rem; }
+  .difficulty label { flex: 1 1 0; justify-content: center; padding: 0 0.4rem; }
 }

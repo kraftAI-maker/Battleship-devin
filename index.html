@@ -25,6 +25,12 @@
     </section>
 
     <section id="placement-panel" class="panel placement-panel" aria-label="Fleet placement">
+      <fieldset id="difficulty" class="difficulty">
+        <legend>Difficulty</legend>
+        <label><input type="radio" name="difficulty" value="easy"> Easy</label>
+        <label><input type="radio" name="difficulty" value="normal" checked> Normal</label>
+        <label><input type="radio" name="difficulty" value="hard"> Hard</label>
+      </fieldset>
       <ul id="ship-list" class="ship-list"></ul>
       <div class="placement-actions">
         <button type="button" id="rotate" class="btn">Rotate: <span id="orientation-label">Horizontal</span></button>
@@ -60,8 +66,8 @@
       <span><i class="swatch hit"></i>Hit</span>
       <span><i class="swatch sunk"></i>Sunk</span>
       <span id="legend-revealed" hidden><i class="swatch revealed"></i>Enemy ship (not hit)</span>
-      <span class="legend-ai" hidden><i class="swatch ai-target"></i>AI target</span>
-      <span class="legend-ai" hidden><i class="swatch ai-hunt"></i>AI hunt</span>
+      <span id="legend-ai-strong" hidden><i class="swatch ai-target"></i><span>AI target</span></span>
+      <span id="legend-ai-faint" hidden><i class="swatch ai-hunt"></i><span>AI hunt</span></span>
     </section>
   </main>
 

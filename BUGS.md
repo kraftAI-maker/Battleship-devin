@@ -218,6 +218,31 @@ viewport, 390x844) and at 1280px with a mouse.
   390px: enemy board above in battle and at game over, before and after
   closing the result dialog. On desktop the side-by-side layout is unchanged.
 
+### 15. "Wait for your turn." stayed visible after the turn came back
+
+- **What happened:** Tapping a cell in *Enemy waters* during the AI's turn
+  shows the red hint "Wait for your turn.". It stayed there after the AI
+  had fired, directly under "Your turn: fire at the enemy".
+- **Root cause:** The hint was only cleared by the player's next valid shot.
+  Finishing the AI's turn re-rendered the boards and status but never
+  touched the hint.
+- **Fix:** When the AI's shot is done, any red error hint is cleared, so the
+  turn indicator is the only instruction left. Checked at 390px with touch
+  emulation: tapping during the AI's turn shows the hint, and it is gone as
+  soon as it's your turn.
+
+### 16. Tapped cells kept their hover highlight on iPhone
+
+- **What happened:** On iPhone, a tapped cell kept the lighter hover colour
+  after the tap, so it looked selected.
+- **Root cause:** iOS Safari applies `:hover` on tap and keeps it until you
+  tap somewhere else. The hover rules (fire-able cells and buttons) applied
+  on every device.
+- **Fix:** All `:hover` styles are inside `@media (hover: hover)`, so only
+  devices with a mouse or trackpad get them. Checked with touch emulation
+  (`hover: none`), a tapped element keeps its normal colour. With a mouse at
+  1280px the hover highlight still works.
+
 ## Found while building the Legacy Fleet theme
 
 ### 14. Long title wrapped to four lines on a phone
