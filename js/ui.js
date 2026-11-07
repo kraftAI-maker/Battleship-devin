@@ -322,7 +322,9 @@ function renderOverlay() {
 function recordFinishedGame() {
   if (game.phase !== PHASE_GAME_OVER || recordedGameId === game.gameId) return;
   recordedGameId = game.gameId;
-  stats = addGame(stats, { won: game.winner === PLAYER, shots: game.stats[PLAYER].shots });
+  // Start from what's stored, so a game another tab just saved isn't overwritten.
+  const base = statsSaved ? loadStats(storage()) : stats;
+  stats = addGame(base, { won: game.winner === PLAYER, shots: game.stats[PLAYER].shots });
   statsSaved = saveStats(storage(), stats);
 }
 
