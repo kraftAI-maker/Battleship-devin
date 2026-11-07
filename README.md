@@ -1,3 +1,4 @@
+[![CI](https://github.com/kraftAI-maker/Battleship-devin/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kraftAI-maker/Battleship-devin/actions/workflows/ci.yml)
 # Battleship
 
 Classic Battleship in the browser against a computer opponent that uses a
