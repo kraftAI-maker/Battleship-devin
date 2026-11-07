@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Play Battleship in your browser against a hunt/target AI.">
+  <title>Battleship</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="phase-placement">
+  <header class="topbar">
+    <h1>Battleship</h1>
+    <button type="button" id="new-game" class="btn btn-secondary">New game</button>
+  </header>
+
+  <main>
+    <section class="status-area">
+      <p id="turn-indicator" class="turn-indicator" role="status" aria-live="polite">Place your fleet</p>
+      <p id="hint" class="hint" aria-live="polite"></p>
+    </section>
+
+    <section id="placement-panel" class="panel placement-panel" aria-label="Fleet placement">
+      <ul id="ship-list" class="ship-list"></ul>
+      <div class="placement-actions">
+        <button type="button" id="rotate" class="btn">Rotate: <span id="orientation-label">Horizontal</span></button>
+        <button type="button" id="random-placement" class="btn">Random placement</button>
+        <button type="button" id="clear-placement" class="btn btn-secondary">Clear</button>
+        <button type="button" id="start-battle" class="btn btn-primary" disabled>Start battle</button>
+      </div>
+    </section>
+
+    <section class="boards">
+      <div class="board-wrap" id="player-wrap">
+        <h2>Your fleet <span class="ships-left" id="player-left"></span></h2>
+        <div id="player-board" class="board" aria-label="Your board"></div>
+      </div>
+      <div class="board-wrap" id="enemy-wrap">
+        <h2>Enemy waters <span class="ships-left" id="enemy-left"></span></h2>
+        <div id="enemy-board" class="board" aria-label="Enemy board"></div>
+      </div>
+    </section>
+
+    <section class="panel log-panel" aria-label="Battle log">
+      <h2>Battle log</h2>
+      <ol id="log" class="log"></ol>
+    </section>
+
+    <section class="legend" aria-label="Legend">
+      <span><i class="swatch ship"></i>Ship</span>
+      <span><i class="swatch miss"></i>Miss</span>
+      <span><i class="swatch hit"></i>Hit</span>
+      <span><i class="swatch sunk"></i>Sunk</span>
+    </section>
+  </main>
+
+  <div id="overlay" class="overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="result-title">
+      <h2 id="result-title">You win!</h2>
+      <p id="result-text"></p>
+      <div class="modal-actions">
+        <button type="button" id="overlay-new-game" class="btn btn-primary">New game</button>
+        <button type="button" id="overlay-close" class="btn btn-secondary">View boards</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/ui.js"></script>
+</body>
+</html>
