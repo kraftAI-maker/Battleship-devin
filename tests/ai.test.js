@@ -68,6 +68,30 @@ describe('AI never shoots the same cell twice', () => {
 });
 
 describe('hunt/target behaviour', () => {
+  test('hunt mode only fires at checkerboard cells while any are untried', () => {
+    const ai = new HuntTargetAI({ rng: createRng(5) });
+    for (let i = 0; i < 50; i++) {
+      assert.equal(ai.mode, MODE_HUNT);
+      const { row, col } = ai.nextShot();
+      assert.equal((row + col) % 2, 0, `hunt shot ${i} at ${row},${col} is off the checkerboard`);
+      ai.recordResult(row, col, SHOT_MISS);
+    }
+    // All 50 even cells are tried: hunting falls back to the remaining odd cells.
+    for (let i = 0; i < 50; i++) {
+      const { row, col } = ai.nextShot();
+      assert.equal((row + col) % 2, 1);
+      ai.recordResult(row, col, SHOT_MISS);
+    }
+    assert.equal(ai.tried.size, 100);
+  });
+
+  test('target mode is not restricted to the checkerboard', () => {
+    const ai = new HuntTargetAI({ rng: createRng(1) });
+    ai.recordResult(4, 4, SHOT_HIT);
+    const { row, col } = ai.nextShot();
+    assert.equal((row + col) % 2, 1, 'neighbours of a hit are always odd cells');
+  });
+
   test('starts in hunt mode and switches to target mode after a hit', () => {
     const ai = new HuntTargetAI({ rng: createRng(1) });
     assert.equal(ai.mode, MODE_HUNT);
@@ -165,8 +189,8 @@ describe('hunt/target behaviour', () => {
       board.placeFleetRandomly(FLEET, createRng(seed));
       total += playOut(new HuntTargetAI({ rng: createRng(seed + 1000) }), board);
     }
-    // Pure random averages ~96 shots; hunt/target is typically ~65.
-    assert.ok(total / games < 80, `average ${total / games} shots`);
+    // Pure random averages ~96 shots; hunt/target with parity is ~51.
+    assert.ok(total / games < 56, `average ${total / games} shots`);
   });
 
   test('reset clears all memory', () => {

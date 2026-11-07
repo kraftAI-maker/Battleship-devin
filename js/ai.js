@@ -17,7 +17,9 @@ export const MODE_TARGET = 'target';
 
 /**
  * Hunt/target AI.
- * - Hunt: fire at a random untried cell.
+ * - Hunt: fire at a random untried checkerboard cell ((row + col) even);
+ *   the smallest ship is 2 long, so every ship covers one. Any untried
+ *   cell once those run out.
  * - Target: after a hit, try the cells adjacent to it. Once two or more
  *   hits line up, keep extending that line in both directions.
  * - When a ship sinks its cells are cleared from the open-hit list; if no
@@ -69,14 +71,19 @@ export class HuntTargetAI {
     return pool[randomInt(this.rng, pool.length)];
   }
 
+  /**
+   * Untried checkerboard cells ((row + col) even). Every ship is at least 2
+   * long, so it always covers one of them. Falls back to any untried cell.
+   */
   huntCandidates() {
-    const cells = [];
+    const untried = [];
     for (let row = 0; row < this.size; row++) {
       for (let col = 0; col < this.size; col++) {
-        if (!this.hasTried(row, col)) cells.push({ row, col });
+        if (!this.hasTried(row, col)) untried.push({ row, col });
       }
     }
-    return cells;
+    const parity = untried.filter((c) => (c.row + c.col) % 2 === 0);
+    return parity.length > 0 ? parity : untried;
   }
 
   /** Cells worth shooting given the unresolved hits, best guesses first. */
