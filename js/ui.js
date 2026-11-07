@@ -145,6 +145,7 @@ function renderBoard(cells, board, { showShips, revealAll }) {
 }
 
 function renderShipList() {
+  const focusedId = el.shipList.contains(document.activeElement) ? document.activeElement.dataset.shipId : null;
   el.shipList.innerHTML = '';
   for (const spec of game.fleet) {
     const li = document.createElement('li');
@@ -165,6 +166,7 @@ function renderShipList() {
     btn.append(name, pips);
     li.appendChild(btn);
     el.shipList.appendChild(li);
+    if (spec.id === focusedId) btn.focus();
   }
 }
 

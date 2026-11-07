@@ -59,3 +59,14 @@ says what happened, the root cause, and the fix.
   header's "New game" button. Checked in the browser: focus is on
   `overlay-new-game` when the dialog opens; after Escape the dialog is gone,
   focus is on `new-game`, and Enter starts a new game.
+
+## 5. Choosing a ship from the fleet list lost keyboard focus
+
+- **What happened:** If you selected a ship in the fleet list with the
+  keyboard (Tab to "Cruiser", press Enter), focus fell back to `<body>`, so
+  you couldn't keep moving through the list or on to the board. (Reported by
+  automated code review.)
+- **Root cause:** `renderShipList()` rebuilds the list with
+  `innerHTML = ''` on every render, which destroys the focused button.
+- **Fix:** Before rebuilding, remember which ship's button had focus, and
+  focus the new button for that ship afterwards.
