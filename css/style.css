@@ -75,11 +75,9 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
   min-height: 44px;
   touch-action: manipulation;
 }
-.btn:hover:not(:disabled) { background: #26507a; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .cell[aria-disabled="true"] { cursor: not-allowed; }
 .btn-primary { background: var(--primary); border-color: var(--primary); }
-.btn-primary:hover:not(:disabled) { background: #3a8ef0; }
 .btn-secondary { background: transparent; }
 .btn:focus-visible, .cell:focus-visible { outline: 3px solid #ffd54f; outline-offset: 1px; }
 
@@ -223,7 +221,12 @@ h2 { font-size: 1rem; margin: 0 0 0.5rem; }
 }
 
 #enemy-board .cell.can-fire { cursor: crosshair; }
-#enemy-board .cell.can-fire:hover { background: var(--water-hover); }
+/* Only where hovering exists: iOS keeps :hover on the last tapped element. */
+@media (hover: hover) {
+  .btn:hover:not(:disabled) { background: #26507a; }
+  .btn-primary:hover:not(:disabled) { background: #3a8ef0; }
+  #enemy-board .cell.can-fire:hover { background: var(--water-hover); }
+}
 .phase-placement #player-board .cell { cursor: pointer; }
 
 .cell.ship { background: var(--ship); }

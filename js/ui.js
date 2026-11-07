@@ -378,6 +378,8 @@ function scheduleAiTurn() {
     if (game.gameId !== gameId || game.phase !== PHASE_AI_TURN) return;
     const res = game.aiFire();
     if (res.ok) flashAiShot();
+    // A "Wait for your turn." from tapping during the AI's turn is stale now.
+    if (el.hint.classList.contains('error')) setHint('');
     render();
   }, AI_DELAY_MS);
 }
