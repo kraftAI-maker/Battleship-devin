@@ -181,7 +181,9 @@ function renderLog() {
 
 function renderOverlay() {
   const show = game.phase === PHASE_GAME_OVER && !overlayDismissed;
+  const wasHidden = el.overlay.hidden;
   el.overlay.hidden = !show;
+  if (show && wasHidden) el.overlayNewGame.focus();
   if (game.phase !== PHASE_GAME_OVER) return;
   const won = game.winner === PLAYER;
   const s = game.stats[PLAYER];
@@ -330,6 +332,10 @@ el.rotate.addEventListener('click', () => {
 });
 
 document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !el.overlay.hidden) {
+    dismissOverlay();
+    return;
+  }
   if ((event.key === 'r' || event.key === 'R') && game.phase === PHASE_PLACEMENT && !event.ctrlKey && !event.metaKey) {
     game.rotate();
     render();
@@ -361,10 +367,13 @@ el.start.addEventListener('click', () => {
 
 el.newGame.addEventListener('click', newGame);
 el.overlayNewGame.addEventListener('click', newGame);
-el.overlayClose.addEventListener('click', () => {
+function dismissOverlay() {
   overlayDismissed = true;
   render();
-});
+  el.newGame.focus();
+}
+
+el.overlayClose.addEventListener('click', dismissOverlay);
 
 newGame();
 

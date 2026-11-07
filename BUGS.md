@@ -45,3 +45,17 @@ says what happened, the root cause, and the fix.
 - **Fix:** Added an inline SVG data-URI favicon in `index.html`, so there's
   no extra request and nothing to 404. Later playthroughs had zero console
   errors.
+
+## 4. Win/lose dialog didn't take keyboard focus
+
+- **What happened:** When a game ended, the win/lose dialog appeared, but
+  keyboard focus stayed on the hidden board behind it (it actually ended up
+  on `<body>`). Keyboard and screen-reader users weren't taken to the result
+  or the "New game" button, and Escape did nothing.
+- **Root cause:** `renderOverlay()` only toggled the `hidden` attribute and
+  never moved focus.
+- **Fix:** When the overlay goes from hidden to visible, focus moves to its
+  "New game" button. Escape or "View boards" closes it and moves focus to the
+  header's "New game" button. Checked in the browser: focus is on
+  `overlay-new-game` when the dialog opens; after Escape the dialog is gone,
+  focus is on `new-game`, and Enter starts a new game.
